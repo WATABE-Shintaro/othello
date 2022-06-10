@@ -47,6 +47,7 @@ STATE_PLACE = 1
 # 8方向のリスト
 DIRECTION_LIST = [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)]
 
+
 # 暫定9
 # aaa=AIRandom()
 
@@ -462,7 +463,7 @@ class CalculateBoard:
                 t_point = copy.copy(point_vec)
                 while True:
                     # 位置ずらす
-                    t_point = t_point + delta
+                    t_point = (t_point[X_AXIS] + delta[X_AXIS], t_point[Y_AXIS] + delta[Y_AXIS])
                     # 値を評価
                     z1 = board_state[t_point] * the_turn
                     if z1 == -1:
@@ -483,7 +484,7 @@ class CalculateBoard:
                 if flag_of_reverse:
                     while True:
                         # 位置逆にずらす
-                        t_point = t_point - delta
+                        t_point = (t_point[X_AXIS] - delta[X_AXIS], t_point[Y_AXIS] - delta[Y_AXIS])
                         # もとの位置に戻ったら終了
                         if t_point == point_vec:
                             break
@@ -582,7 +583,7 @@ class CalculateBoard:
             for i in range(NUMBER_OF_SQUARE):
                 for j in range(NUMBER_OF_SQUARE):
                     putableornotA, temp = cls.calculate_where_reverse(i, j, tempfirstornotA * -1,
-                                                                     board_state)  # 暫定9ベクトル化
+                                                                      board_state)  # 暫定9ベクトル化
                     if putableornotA == PLACEABLE:
                         pass_or_not = NOT_PLACEABLE
         return (pass_or_not, placeable_point)
@@ -975,7 +976,7 @@ class mainclass():
             sys.exit(1)
         # ひっくり返す場所をもらう
         putableornotC, turnplaceB = CalculateBoard.calculate_where_reverse(pointB[X_AXIS], pointB[Y_AXIS],
-                                                                          tempfirstornotC, self.boadsurface)
+                                                                           tempfirstornotC, self.boadsurface)
         # おけるか否か
         if putableornotC == NOT_PLACEABLE:
             if self.player[self.firstornot] == HUMAN:
@@ -1065,7 +1066,7 @@ class mainclass():
             sys.exit(1)
         # ひっくり返す場所をもらう
         putableornotC, turnplaceB = CalculateBoard.calculate_where_reverse(pointB[X_AXIS], pointB[Y_AXIS],
-                                                                          tempfirstornotC, self.boadsurface)
+                                                                           tempfirstornotC, self.boadsurface)
         # おけるか否か
         if putableornotC == NOT_PLACEABLE:
             if self.player[self.firstornot] == HUMAN:
