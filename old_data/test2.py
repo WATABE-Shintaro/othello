@@ -1,0 +1,3 @@
+import OthelloCy
+
+OthelloCy.OthelloStart()

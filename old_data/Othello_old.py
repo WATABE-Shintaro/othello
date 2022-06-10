@@ -10,60 +10,59 @@ import sys
 
 # 定数
 # GUI用
-SQUARE_SIZE = 50  # マスの大きさ
-NUMBER_OF_SQUARE = 8  # マスの数
-GAP_SIZE = 50  # 隙間の広さ
-BOARD_SIZE = SQUARE_SIZE * NUMBER_OF_SQUARE  # ボードの広さ
-OPTIONS_HEIGHT = 50  # オプションの縦の幅
+SquareSize = 50  # マスの大きさ
+TheNumberOfSquare = 8  # マスの数
+GapSize = 50  # 隙間の広さ
+BoadSize = SquareSize * TheNumberOfSquare  # ボードの広さ
+OptionsHight = 50  # オプションの縦の幅
 # マスのステート
-OUT_OF_BOARD = -2
-DARK = -1
-GREEN = 0
-LIGHT = 1
+OutBoad = -2
+Black = -1
+Green = 0
+White = 1
 # ターンが先行か後攻か
-TURN_OF_DARK = -1
-TURN_OF_WHITE = 1
-TURN_OF_OTHER = 3
-# 配列の要素用の先行か後攻か
-T_DARK = 0
-T_LIGHT = 1
-T_OTHER = 2
+FirstT = -1
+SecondT = 1
+OtherT = 3
+# 配列用の先行か後攻か
+FirstP = 0
+SecondP = 1
+OtherP = 2
 # 人かAIか
-HUMAN = 0
-AI_PLAYER = 1
+Human = 0
+AIPlayer = 1
 # ゲームモード
-PLAY_GAME_MODE = 0
-LEARNING_MODE = 1
+GameMode = 0
+RunMode = 1
 # 座標
-X_AXIS = 0
-Y_AXIS = 1
+cX = 0
+cY = 1
 # そこにおけるかどうか
-NOT_PLACEABLE = 0
-PLACEABLE = 1
+NotPuttable = 0
+Puttable = 1
 # おける場所があるか
-STATE_GAME_END = -1
-STATE_PASS = 0
-STATE_PLACE = 1
-# 8方向のリスト
-DIRECTION_LIST = [(0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1), (-1, 0), (-1, 1)]
+DoublePass = -1
+NotMoveable = 0
+Moveable = 1
+
 
 # 暫定9
 # aaa=AIRandom()
 
 # クラス群
 # ランダム
-class AIRandom:
+class AIRandom():
     def __init__(self):
         pass
 
     def playprocess(self, aiboadsurface, aiputablepoint, aifirstornot, aiturnnumber):
-        puttablecount = np.count_nonzero(aiputablepoint == PLACEABLE)
+        puttablecount = np.count_nonzero(aiputablepoint == Puttable)
         thedecision = random.randrange(puttablecount)
         k = 0
         pointreturn = [0, 0]
-        for i in range(NUMBER_OF_SQUARE):  # 暫定9二重ループをブレークしたい
-            for j in range(NUMBER_OF_SQUARE):
-                if aiputablepoint[i][j] == PLACEABLE:
+        for i in range(TheNumberOfSquare):  # 暫定9二重ループをブレークしたい
+            for j in range(TheNumberOfSquare):
+                if aiputablepoint[i][j] == Puttable:
                     if k == thedecision:
                         pointreturn = [i, j]
                     k += 1
@@ -86,7 +85,7 @@ class AIRandom:
 
 
 # 優先順位型
-class AILookPriority:
+class AILookPriority():
     def __init__(self):
         # 優先順位のリスト作る
         self.prioritylist = [[0, 0], [0, 7], [7, 7], [7, 0]]
@@ -127,7 +126,7 @@ class AILookPriority:
     def playprocess(self, aiboadsurface, aiputablepoint, aifirstornot, aiturnnumber):
         for i in range(len(self.prioritylist)):
             aipoint = copy.copy(self.prioritylist[i])
-            if aiputablepoint[aipoint[X_AXIS], aipoint[Y_AXIS]] == PLACEABLE:
+            if aiputablepoint[aipoint[cX], aipoint[cY]] == Puttable:
                 break
         else:
             messagebox.showerror("error／(^o^)＼", "AILookPriorityはおける場所を見つけられませんでした。強制終了します。")
@@ -151,38 +150,37 @@ class AILookPriority:
 
 
 # 先読み型
-class AIReadAhead:
+class AIReadAhead():
 
     def __init__(self):
-        self.firstornotT2 = None
         self.ChangeMoveTurnNumber = 26
         self.Deeplevel = 5
 
     def playprocess(self, aiboadsurface, aiputablepoint, aifirstornot, aiturnnumber):
         alpha = None
         beta = None
-        if aifirstornot == T_DARK:
-            self.firstornotT2 = TURN_OF_DARK
-        elif aifirstornot == T_LIGHT:
-            self.firstornotT2 = TURN_OF_WHITE
+        if aifirstornot == FirstP:
+            self.firstornotT2 = FirstT
+        elif aifirstornot == SecondP:
+            self.firstornotT2 = SecondT
         else:
             messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
             sys.exit(1)
         firstornotT = self.firstornotT2
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(aiboadsurface, firstornotT=firstornotT)
-        if moveableornot != STATE_PLACE:
+        moveableornot, putableplace, trunplacelist = searchandscan.Search2(aiboadsurface, firstornotT=firstornotT)
+        if moveableornot != Moveable:
             messagebox.showerror("error／(^o^)＼", "不正な値(moveableornot)。強制終了します。")
             sys.exit(1)
         if aiturnnumber >= 26:
             scoremax = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if putableplace[i, j] == Puttable:
                         nextboadsurface = copy.copy(aiboadsurface)
                         nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
+                        for k in range(TheNumberOfSquare):
+                            for l in range(TheNumberOfSquare):
+                                if trunplacelist[i][j][k][l] == True:
                                     nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
                         score = self.selectminpiece(nextboadsurface, alpha, beta, firstornotT * -1)
                         if scoremax is not None and score > scoremax:
@@ -198,14 +196,14 @@ class AIReadAhead:
             return point
         else:
             scoremax = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if putableplace[i, j] == Puttable:
                         nextboadsurface = copy.copy(aiboadsurface)
                         nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
+                        for k in range(TheNumberOfSquare):
+                            for l in range(TheNumberOfSquare):
+                                if trunplacelist[i][j][k][l] == True:
                                     nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
                         score = self.selectminscore(nextboadsurface, self.Deeplevel - 1, alpha, beta, firstornotT * -1)
                         if scoremax is not None and score > scoremax:
@@ -236,9 +234,9 @@ class AIReadAhead:
         print("AIオブジェクト破棄")
 
     def makescore(self, boadsurface2, firstornotT):
-        moveableornot, puttableplace = CalculateBoard.calculate_where_placeable(boadsurface2, the_turn=firstornotT)
-        if moveableornot == PLACEABLE:
-            puttablecount = np.count_nonzero(puttableplace == PLACEABLE)
+        moveableornot, puttableplace = searchandscan.Search(boadsurface2, firstornotT=firstornotT)
+        if moveableornot == Puttable:
+            puttablecount = np.count_nonzero(puttableplace == Puttable)
         else:
             puttablecount = 0
         A = puttablecount * firstornotT * self.firstornotT2
@@ -249,18 +247,18 @@ class AIReadAhead:
     def selectmaxscore(self, boadsurface2, depth, alpha, beta, firstornotT):
         if depth == 0:
             return self.makescore(boadsurface2, firstornotT)
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
+        moveableornot, putableplace, trunplacelist = searchandscan.Search2(boadsurface2, firstornotT=firstornotT)
         depth -= 1
-        if moveableornot == STATE_PLACE:
+        if moveableornot == Moveable:
             scoremax = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if putableplace[i, j] == Puttable:
                         nextboadsurface = copy.copy(boadsurface2)
                         nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
+                        for k in range(TheNumberOfSquare):
+                            for l in range(TheNumberOfSquare):
+                                if trunplacelist[i][j][k][l] == True:
                                     nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
                         score = self.selectminscore(nextboadsurface, depth, alpha, beta, firstornotT * -1)
                         if beta is not None and score >= beta:
@@ -274,7 +272,7 @@ class AIReadAhead:
                         elif scoremax is None:
                             scoremax = score
             return scoremax
-        elif moveableornot == STATE_PASS:
+        elif moveableornot == NotMoveable:
             score = self.selectminscore(boadsurface2, depth, alpha, beta, firstornotT * -1)
             return score
         else:
@@ -284,18 +282,18 @@ class AIReadAhead:
     def selectminscore(self, boadsurface2, depth, alpha, beta, firstornotT):
         if depth == 0:
             return self.makescore(boadsurface2, firstornotT)
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
+        moveableornot, putableplace, trunplacelist = searchandscan.Search2(boadsurface2, firstornotT=firstornotT)
         depth -= 1
-        if moveableornot == STATE_PLACE:
+        if moveableornot == Moveable:
             scoremin = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if putableplace[i, j] == Puttable:
                         nextboadsurface = copy.copy(boadsurface2)
                         nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
+                        for k in range(TheNumberOfSquare):
+                            for l in range(TheNumberOfSquare):
+                                if trunplacelist[i][j][k][l] == True:
                                     nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
                         score = self.selectmaxscore(nextboadsurface, depth, alpha, beta, firstornotT * -1)
                         if alpha is not None and score <= alpha:
@@ -309,7 +307,7 @@ class AIReadAhead:
                         elif scoremin is None:
                             scoremin = score
             return scoremin
-        elif moveableornot == STATE_PASS:
+        elif moveableornot == NotMoveable:
             score = self.selectmaxscore(boadsurface2, depth, alpha, beta, firstornotT * -1)
             return score
         else:
@@ -320,22 +318,22 @@ class AIReadAhead:
         return np.count_nonzero(boadsurface2 == self.firstornotT2)
 
     def selectmaxpiece(self, boadsurface2, alpha, beta, firstornotT):
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
-        if moveableornot == STATE_GAME_END:
+        moveableornot, putableplace, trunplacelist = searchandscan.Search2(boadsurface2, firstornotT=firstornotT)
+        if moveableornot == DoublePass:
             return self.countmypiece(boadsurface2)
-        elif moveableornot == STATE_PASS:
+        elif moveableornot == NotMoveable:
             score = self.selectminpiece(boadsurface2, alpha, beta, firstornotT * -1)
             return score
-        elif moveableornot == PLACEABLE:
+        elif moveableornot == Puttable:
             scoremax = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if putableplace[i, j] == Puttable:
                         nextboadsurface = copy.copy(boadsurface2)
                         nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
+                        for k in range(TheNumberOfSquare):
+                            for l in range(TheNumberOfSquare):
+                                if trunplacelist[i][j][k][l] == True:
                                     nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
                         score = self.selectminpiece(nextboadsurface, alpha, beta, firstornotT * -1)
                         if beta is not None and score >= beta:
@@ -354,22 +352,22 @@ class AIReadAhead:
             sys.exit(1)
 
     def selectminpiece(self, boadsurface2, alpha, beta, firstornotT):
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
-        if moveableornot == STATE_GAME_END:
+        moveableornot, putableplace, trunplacelist = searchandscan.Search2(boadsurface2, firstornotT=firstornotT)
+        if moveableornot == DoublePass:
             return self.countmypiece(boadsurface2)
-        elif moveableornot == STATE_PASS:
+        elif moveableornot == NotMoveable:
             score = self.selectmaxpiece(boadsurface2, alpha, beta, firstornotT * -1)
             return score
-        elif moveableornot == PLACEABLE:
+        elif moveableornot == Puttable:
             scoremin = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if putableplace[i, j] == Puttable:
                         nextboadsurface = copy.copy(boadsurface2)
                         nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
+                        for k in range(TheNumberOfSquare):
+                            for l in range(TheNumberOfSquare):
+                                if trunplacelist[i][j][k][l] == True:
                                     nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
                         self.selectmaxpiece(nextboadsurface, alpha, beta, firstornotT * -1)
                         if alpha is not None and score <= alpha:
@@ -389,7 +387,7 @@ class AIReadAhead:
 
 
 # 強化学習
-class AIReinforcementLearning:
+class AIReinforcementLearning():
     def __init__(self, learnornot):
         pass
 
@@ -413,7 +411,7 @@ class AIReinforcementLearning:
 
 
 # 進化学習
-class AIGA:
+class AIGA():
     def __init__(self, learnornot):
         pass
 
@@ -437,192 +435,198 @@ class AIGA:
 
 
 # スキャンするオブジェクト
-class CalculateBoard:
+class searchandscan():
     def __init__(self):
         pass
 
-    # そこにおいたときどこがひっくり返るか、ひっくり返った盤面をしめしてくれる
+    # そこにおいたときの挙動をしめしてくれる
     @classmethod
-    def calculate_where_reverse(cls, x5, y5, the_turn, board_state):
-        # board_surfaceに合うように+1する
-        point_vec = (x5 + 1, y5 + 1)
+    def Scan(cls, x5, y5, tempfirstornotB, boadsurface2):
+        # boadsurface2に合うように+1する
+        pointC = [x5 + 1, y5 + 1]
         # 最初置けないに設定して、あとから置けるに設定しなおす
-        placeable_or_not = NOT_PLACEABLE
+        putableornotB = NotPuttable
         # 配列宣言
-        reverse_point = np.zeros((NUMBER_OF_SQUARE, NUMBER_OF_SQUARE))
-
+        turnplaceA = np.zeros((TheNumberOfSquare, TheNumberOfSquare))
         # その場所がgreenの場合のみおける
-        if board_state[point_vec] == DARK or board_state[point_vec] == LIGHT:
+        if boadsurface2[pointC[cX], pointC[cY]] == Black or boadsurface2[pointC[cX], pointC[cY]] == White:
             pass
-        elif board_state[point_vec] == GREEN:
+        elif boadsurface2[pointC[cX], pointC[cY]] == Green:
             # ひっくり返す場所検索
+            # 8方向
+            l = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]]
             # 8方向繰り返し
-            for delta in DIRECTION_LIST:
+            for delta in l:
                 # 位置検索用
-                t_point = copy.copy(point_vec)
+                temppoint = copy.copy(pointC)
                 while True:
                     # 位置ずらす
-                    t_point = t_point + delta
+                    temppoint[cX] = temppoint[cX] + delta[cX]
+                    temppoint[cY] = temppoint[cY] + delta[cY]
                     # 値を評価
-                    z1 = board_state[t_point] * the_turn
-                    if z1 == -1:
-                        # 違う色なので続ける
-                        pass
-                    elif z1 == 1:
-                        # 挟んでることが確認できたのでひっくり返しへ(ひっくり返しonにする)
-                        flag_of_reverse = True
-                        break
-                    elif z1 == -2 or z1 == 0 or z1 == 2:
-                        # 自分の色がないまま空白のマス又は盤外になったので何もせず終わる
-                        flag_of_reverse = False
-                        break
-                    else:
-                        messagebox.showerror("error", "不正な値。強制終了します。")
-                        sys.exit(1)
-                # ひっくり返しonのとき
-                if flag_of_reverse:
-                    while True:
-                        # 位置逆にずらす
-                        t_point = t_point - delta
-                        # もとの位置に戻ったら終了
-                        if t_point == point_vec:
-                            break
-                        # そこの位置をひっくり返すに
-                        reverse_point[t_point[X_AXIS] - 1, t_point[Y_AXIS] - 1] = True
-                        # ひっくり返す場所あるにする
-                        placeable_or_not = PLACEABLE
-        else:
-            messagebox.showerror("error", "不正な値。強制終了します。")
-            sys.exit(1)
-        return placeable_or_not, reverse_point
-
-    # おけるかどうかのみ示すようにする予定 暫定9
-    @classmethod
-    def Scan2(cls, x5, y5, the_turn, board_state):
-        # board_stateに合うように+1する
-        point_vec = [x5 + 1, y5 + 1]
-        # 最初置けないに設定して、あとから置けるに設定しなおす
-        placeable_or_not = NOT_PLACEABLE
-        # 配列宣言
-        reverse_point = np.zeros((NUMBER_OF_SQUARE, NUMBER_OF_SQUARE))
-        # その場所がgreenの場合のみおける
-        if board_state[point_vec] == DARK or board_state[point_vec] == LIGHT:
-            pass
-        elif board_state[point_vec] == GREEN:
-            # ひっくり返す場所検索
-            # 8方向繰り返し
-            for delta in DIRECTION_LIST:
-                # 位置検索用
-                t_point = copy.copy(point_vec)
-                while True:
-                    # 位置ずらす
-                    t_point = t_point + delta
-                    # 値を評価
-                    z1 = board_state[t_point] * the_turn
+                    z1 = boadsurface2[temppoint[cX], temppoint[cY]] * tempfirstornotB
                     if z1 == -1:
                         # 続ける
                         pass
                     elif z1 == 1:
-                        # 挟んでることが確認できたのでひっくり返しへ(ひっくり返しonにする)
-                        reverse_flag = True
+                        # ひっくり返しへ(ひっくり返しonにする)
+                        flag = True
                         break
                     elif z1 == -2 or z1 == 0 or z1 == 2:
-                        # 自分の色がないまま空白のマス又は盤外になったので何もせず終わる
-                        reverse_flag = False
+                        # 何もせず終わる
+                        flag = False
                         break
                     else:
-                        messagebox.showerror("error", "不正な値。強制終了します。")
+                        messagebox.showerror("error／(^o^)＼", "不正な値(color)。強制終了します。")
                         sys.exit(1)
                 # ひっくり返しonのとき
-                if reverse_flag:
+                if flag == True:
                     while True:
                         # 位置逆にずらす
-                        t_point = t_point - delta
+                        temppoint[cX] = temppoint[cX] - delta[cX]
+                        temppoint[cY] = temppoint[cY] - delta[cY]
                         # もとの位置に戻ったら終了
-                        if t_point == point_vec:
+                        if temppoint == pointC:
                             break
                         # そこの位置をひっくり返すに
-                        reverse_point[t_point[X_AXIS] - 1, t_point[Y_AXIS] - 1] = True
+                        turnplaceA[temppoint[cX] - 1, temppoint[cY] - 1] = True
                         # ひっくり返す場所あるにする
-                        placeable_or_not = PLACEABLE
+                        putableornotB = Puttable
         else:
             messagebox.showerror("error／(^o^)＼", "不正な値(pointC又はboadsurface2)。強制終了します。")
             sys.exit(1)
-        return placeable_or_not, reverse_point
+        return (putableornotB, turnplaceA)
+
+    # おけるかどうかのみ示すようにする予定 暫定9
+    @classmethod
+    def Scan2(cls, x5, y5, tempfirstornotB, boadsurface2):
+        # boadsurfaceに合うように+1する
+        pointC = [x5 + 1, y5 + 1]
+        # 最初置けないに設定して、あとから置けるに設定しなおす
+        putableornotB = NotPuttable
+        # 配列宣言
+        turnplaceA = np.zeros((TheNumberOfSquare, TheNumberOfSquare))
+        # その場所がgreenの場合のみおける
+        if boadsurface2[pointC[cX], pointC[cY]] == Black or boadsurface2[pointC[cX], pointC[cY]] == White:
+            pass
+        elif boadsurface2[pointC[cX], pointC[cY]] == Green:
+            # ひっくり返す場所検索
+            # 8方向
+            l = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]]
+            # 8方向繰り返し
+            for delta in l:
+                # 位置検索用
+                temppoint = copy.copy(pointC)
+                while True:
+                    # 位置ずらす
+                    temppoint[cX] = temppoint[cX] + delta[cX]
+                    temppoint[cY] = temppoint[cY] + delta[cY]
+                    # 値を評価
+                    z1 = boadsurface2[temppoint[cX], temppoint[cY]] * tempfirstornotB
+                    if z1 == -1:
+                        # 続ける
+                        pass
+                    elif z1 == 1:
+                        # ひっくり返しへ(ひっくり返しonにする)
+                        flag = True
+                        break
+                    elif z1 == -2 or z1 == 0 or z1 == 2:
+                        # 何もせず終わる
+                        flag = False
+                        break
+                    else:
+                        messagebox.showerror("error／(^o^)＼", "不正な値(color)。強制終了します。")
+                        sys.exit(1)
+                # ひっくり返しonのとき
+                if flag == True:
+                    while True:
+                        # 位置逆にずらす
+                        temppoint[cX] = temppoint[cX] - delta[cX]
+                        temppoint[cY] = temppoint[cY] - delta[cY]
+                        # もとの位置に戻ったら終了
+                        if temppoint == pointC:
+                            break
+                        # そこの位置をひっくり返すに
+                        turnplaceA[temppoint[cX] - 1, temppoint[cY] - 1] = True
+                        # ひっくり返す場所あるにする
+                        putableornotB = Puttable
+        else:
+            messagebox.showerror("error／(^o^)＼", "不正な値(pointC又はboadsurface2)。強制終了します。")
+            sys.exit(1)
+        return (putableornotB, turnplaceA)
 
     # おける場所のみ示す
     @classmethod
-    def calculate_where_placeable(cls, board_state, idx_turn=T_OTHER, the_turn=TURN_OF_OTHER):
-        pass_or_not = STATE_PASS
-        placeable_point = np.zeros((NUMBER_OF_SQUARE, NUMBER_OF_SQUARE))
+    def Search(cls, boadsurface2, firstornotP=OtherP, firstornotT=OtherT):
+        moveableornotB = NotMoveable
+        putablepointB = np.zeros((TheNumberOfSquare, TheNumberOfSquare))
         tempfirstornotA = 0
         # 先行後攻を変換
-        if not the_turn == TURN_OF_OTHER:
-            tempfirstornotA = the_turn
+        if not firstornotT == OtherT:
+            tempfirstornotA = firstornotT
         else:
-            if idx_turn == T_DARK:
-                tempfirstornotA = TURN_OF_DARK
-            elif idx_turn == T_LIGHT:
-                tempfirstornotA = TURN_OF_WHITE
+            if firstornotP == FirstP:
+                tempfirstornotA = FirstT
+            elif firstornotP == SecondP:
+                tempfirstornotA = SecondT
             else:
                 messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
                 sys.exit(1)
         # 一マスごとにおける場所を調べておける場所があるかをおける場所を記録した配列に記録、これを全マスやり、一マスでもおける場所があるか調べる
-        for i in range(NUMBER_OF_SQUARE):
-            for j in range(NUMBER_OF_SQUARE):
-                putableornotA, temp = cls.calculate_where_reverse(i, j, tempfirstornotA, board_state)  # 暫定9ベクトル化
-                if putableornotA == PLACEABLE:
-                    pass_or_not = STATE_PLACE
-                    placeable_point[i, j] = PLACEABLE
+        for i in range(TheNumberOfSquare):
+            for j in range(TheNumberOfSquare):
+                putableornotA, temp = cls.Scan(i, j, tempfirstornotA, boadsurface2)  # 暫定9ベクトル化
+                if putableornotA == Puttable:
+                    moveableornotB = Moveable
+                    putablepointB[i, j] = Puttable
                 else:
-                    placeable_point[i, j] = NOT_PLACEABLE
+                    putablepointB[i, j] = NotPuttable
         # 置けないなら次ターンも調べる 両方パスに設定して　全マス調べておける場所があるなら片パスに設定する
-        if pass_or_not == NOT_PLACEABLE:
-            pass_or_not = STATE_GAME_END
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    putableornotA, temp = cls.calculate_where_reverse(i, j, tempfirstornotA * -1,
-                                                                     board_state)  # 暫定9ベクトル化
-                    if putableornotA == PLACEABLE:
-                        pass_or_not = NOT_PLACEABLE
-        return (pass_or_not, placeable_point)
+        if moveableornotB == NotPuttable:
+            moveableornotB = DoublePass
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    putableornotA, temp = cls.Scan(i, j, tempfirstornotA * -1, boadsurface2)  # 暫定9ベクトル化
+                    if putableornotA == Puttable:
+                        moveableornotB = NotPuttable
+        return (moveableornotB, putablepointB)
 
     # おける場所とともにおいたときの挙動も示す
     @classmethod
-    def Search2(cls, boadsurface2, firstornotP=T_OTHER, firstornotT=TURN_OF_OTHER):
-        moveableornotB = STATE_PASS
-        putablepointB = np.zeros((NUMBER_OF_SQUARE, NUMBER_OF_SQUARE))
+    def Search2(cls, boadsurface2, firstornotP=OtherP, firstornotT=OtherT):
+        moveableornotB = NotMoveable
+        putablepointB = np.zeros((TheNumberOfSquare, TheNumberOfSquare))
         tempfirstornotA = 0
-        trunplacelist = np.zeros((NUMBER_OF_SQUARE, NUMBER_OF_SQUARE, NUMBER_OF_SQUARE, NUMBER_OF_SQUARE))
+        trunplacelist = np.zeros((TheNumberOfSquare, TheNumberOfSquare, TheNumberOfSquare, TheNumberOfSquare))
         # 先行後攻を変換
-        if not firstornotT == TURN_OF_OTHER:
+        if not firstornotT == OtherT:
             tempfirstornotA = firstornotT
         else:
-            if firstornotP == T_DARK:
-                tempfirstornotA = TURN_OF_DARK
-            elif firstornotP == T_LIGHT:
-                tempfirstornotA = TURN_OF_WHITE
+            if firstornotP == FirstP:
+                tempfirstornotA = FirstT
+            elif firstornotP == SecondP:
+                tempfirstornotA = SecondT
             else:
                 messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
                 sys.exit(1)
         # 一マスごとにおける場所を調べておける場所があるかをおける場所を記録した配列に記録、これを全マスやり、一マスでもおける場所があるか調べる
-        for i in range(NUMBER_OF_SQUARE):
-            for j in range(NUMBER_OF_SQUARE):
+        for i in range(TheNumberOfSquare):
+            for j in range(TheNumberOfSquare):
                 putableornotA, turnplaceC = cls.Scan2(i, j, tempfirstornotA, boadsurface2)  # 暫定9ベクトル化
-                if putableornotA == PLACEABLE:
-                    moveableornotB = STATE_PLACE
-                    putablepointB[i, j] = PLACEABLE
+                if putableornotA == Puttable:
+                    moveableornotB = Moveable
+                    putablepointB[i, j] = Puttable
                     trunplacelist[i][j] = copy.copy(turnplaceC)
                 else:
-                    putablepointB[i, j] = NOT_PLACEABLE
+                    putablepointB[i, j] = NotPuttable
         # 置けないなら次ターンも調べる 両方パスに設定して　全マス調べておける場所があるなら片パスに設定する
-        if moveableornotB == NOT_PLACEABLE:
-            moveableornotB = STATE_GAME_END
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
+        if moveableornotB == NotPuttable:
+            moveableornotB = DoublePass
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
                     putableornotA, turnplaceC = cls.Scan2(i, j, tempfirstornotA * -1, boadsurface2)  # 暫定9ベクトル化
-                    if putableornotA == PLACEABLE:
-                        moveableornotB = NOT_PLACEABLE
+                    if putableornotA == Puttable:
+                        moveableornotB = NotPuttable
         return (moveableornotB, putablepointB, trunplacelist)
 
 
@@ -638,8 +642,8 @@ class mainclass():
         # ウィンドウ作成
         self.mainframe = ttk.Frame(
             self.root,
-            height=GAP_SIZE * 2 + BOARD_SIZE + OPTIONS_HEIGHT,
-            width=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 200 + GAP_SIZE,
+            height=GapSize * 2 + BoadSize + OptionsHight,
+            width=GapSize + BoadSize + GapSize + 200 + GapSize,
             relief='sunken',
             borderwidth=5)
         self.mainframe.grid()
@@ -649,18 +653,18 @@ class mainclass():
             self.mainframe,
             relief='sunken',
             borderwidth=5)
-        self.mainpanel.place(x=GAP_SIZE, y=GAP_SIZE)
+        self.mainpanel.place(x=GapSize, y=GapSize)
 
         # ゲーム画面にボード用キャンバス作成
         self.gamecanvas = tk.Canvas(
             self.mainpanel,
-            height=BOARD_SIZE,
-            width=BOARD_SIZE)
-        self.gamecanvas.create_rectangle(0, 0, BOARD_SIZE, BOARD_SIZE, fill='green')  # 塗りつぶし
-        for i in range(NUMBER_OF_SQUARE - 1):
-            tempx = (i + 1) * SQUARE_SIZE
-            self.gamecanvas.create_line(tempx, 0, tempx, BOARD_SIZE)
-            self.gamecanvas.create_line(0, tempx, BOARD_SIZE, tempx)
+            height=BoadSize,
+            width=BoadSize)
+        self.gamecanvas.create_rectangle(0, 0, BoadSize, BoadSize, fill='green')  # 塗りつぶし
+        for i in range(TheNumberOfSquare - 1):
+            tempx = (i + 1) * SquareSize
+            self.gamecanvas.create_line(tempx, 0, tempx, BoadSize)
+            self.gamecanvas.create_line(0, tempx, BoadSize, tempx)
         self.gamecanvas.bind("<1>", self.boadclick)
         self.gamecanvas.grid()
 
@@ -670,28 +674,28 @@ class mainclass():
             text='a',
             background='#0000aa',
             foreground='#ffffff')
-        self.messagelabel.place(x=GAP_SIZE, y=GAP_SIZE + BOARD_SIZE + GAP_SIZE)
+        self.messagelabel.place(x=GapSize, y=GapSize + BoadSize + GapSize)
 
         # 一回戦う為のボタン
         self.gamestartbutton = ttk.Button(
             self.mainframe,
             text='game')
         self.gamestartbutton.bind("<1>", self.gamestartbuttonclick)
-        self.gamestartbutton.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE, y=GAP_SIZE)
+        self.gamestartbutton.place(x=GapSize + BoadSize + GapSize, y=GapSize)
 
         # 何回も試行するためのボタン
         self.runningstartbutton = ttk.Button(
             self.mainframe,
             text='run')
         self.runningstartbutton.bind("<1>", self.runningstartbuttonclick)
-        self.runningstartbutton.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 100, y=GAP_SIZE)
+        self.runningstartbutton.place(x=GapSize + BoadSize + GapSize + 100, y=GapSize)
 
         # 先行のAI決める
         self.labelforfirst = ttk.Label(
             self.mainframe,
             text="先行"
         )
-        self.labelforfirst.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE, y=GAP_SIZE + OPTIONS_HEIGHT)
+        self.labelforfirst.place(x=GapSize + BoadSize + GapSize, y=GapSize + OptionsHight)
         self.comboforfirstvalue = StringVar()
         self.comboforfirst = ttk.Combobox(
             self.mainframe,
@@ -700,14 +704,14 @@ class mainclass():
         )
         self.comboforfirst['values'] = ["人間", "ランダム", "優先順位型", "先読み型", "強化学習", "進化学習"]
         self.comboforfirst.set("人間")
-        self.comboforfirst.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 50, y=GAP_SIZE + OPTIONS_HEIGHT)
+        self.comboforfirst.place(x=GapSize + BoadSize + GapSize + 50, y=GapSize + OptionsHight)
 
         # 後攻のAI決める
         self.labelforsecond = ttk.Label(
             self.mainframe,
             text="後攻"
         )
-        self.labelforsecond.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE, y=GAP_SIZE + OPTIONS_HEIGHT * 2)
+        self.labelforsecond.place(x=GapSize + BoadSize + GapSize, y=GapSize + OptionsHight * 2)
         self.comboforsecondvalue = StringVar()
         self.comboforsecond = ttk.Combobox(
             self.mainframe,
@@ -716,7 +720,7 @@ class mainclass():
         )
         self.comboforsecond['values'] = ["人間", "ランダム", "優先順位型", "先読み型", "強化学習", "進化学習"]
         self.comboforsecond.set("人間")
-        self.comboforsecond.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 50, y=GAP_SIZE + OPTIONS_HEIGHT * 2)
+        self.comboforsecond.place(x=GapSize + BoadSize + GapSize + 50, y=GapSize + OptionsHight * 2)
 
         # 学習するか否か設定用
         self.checkbuttonforlearnornotvalue = BooleanVar()
@@ -727,23 +731,22 @@ class mainclass():
             offvalue=False,
             variable=self.checkbuttonforlearnornotvalue
         )
-        self.checkbuttonforlearnornot.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 20,
-                                            y=GAP_SIZE + OPTIONS_HEIGHT * 3 + GAP_SIZE)
+        self.checkbuttonforlearnornot.place(x=GapSize + BoadSize + GapSize + 20, y=GapSize + OptionsHight * 3 + GapSize)
 
         # 試合試行回数設定用
         self.labelforentry = ttk.Label(
             self.mainframe,
             text="試合回数"
         )
-        self.labelforentry.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 20,
-                                 y=GAP_SIZE + OPTIONS_HEIGHT * 3 + GAP_SIZE + OPTIONS_HEIGHT)
+        self.labelforentry.place(x=GapSize + BoadSize + GapSize + 20,
+                                 y=GapSize + OptionsHight * 3 + GapSize + OptionsHight)
         self.entryforrunnningtimevalue = StringVar()
         self.entryforrunnningtime = ttk.Entry(
             self.mainframe,
             textvariable=self.entryforrunnningtimevalue
         )
-        self.entryforrunnningtime.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 80,
-                                        y=GAP_SIZE + OPTIONS_HEIGHT * 3 + GAP_SIZE + OPTIONS_HEIGHT)
+        self.entryforrunnningtime.place(x=GapSize + BoadSize + GapSize + 80,
+                                        y=GapSize + OptionsHight * 3 + GapSize + OptionsHight)
 
         # 試合止めるよう
         self.stopbutton = ttk.Button(
@@ -751,8 +754,7 @@ class mainclass():
             text="stop"
         )
         self.stopbutton.bind("<1>", self.stopbuttonclick)
-        self.stopbutton.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE,
-                              y=GAP_SIZE + OPTIONS_HEIGHT * 3 + GAP_SIZE + OPTIONS_HEIGHT * 2)
+        self.stopbutton.place(x=GapSize + BoadSize + GapSize, y=GapSize + OptionsHight * 3 + GapSize + OptionsHight * 2)
 
         # 自己学習を始めるボタン
         self.selflearnbutton = ttk.Button(
@@ -760,26 +762,26 @@ class mainclass():
             text="selflern"
         )
         self.selflearnbutton.bind("<1>", self.selflearnbuttonclick)
-        self.selflearnbutton.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE,
-                                   y=GAP_SIZE + OPTIONS_HEIGHT * 3 + GAP_SIZE + OPTIONS_HEIGHT * 4)
+        self.selflearnbutton.place(x=GapSize + BoadSize + GapSize,
+                                   y=GapSize + OptionsHight * 3 + GapSize + OptionsHight * 4)
 
         # 自己学習回数設定用
         self.labelforentry2 = ttk.Label(
             self.mainframe,
             text="自己学習回数"
         )
-        self.labelforentry2.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE,
-                                  y=GAP_SIZE + OPTIONS_HEIGHT * 3 + GAP_SIZE + OPTIONS_HEIGHT * 5)
+        self.labelforentry2.place(x=GapSize + BoadSize + GapSize,
+                                  y=GapSize + OptionsHight * 3 + GapSize + OptionsHight * 5)
         self.entryforselflearntimevalue = StringVar()
         self.entryforselflearntime = ttk.Entry(
             self.mainframe,
             textvariable=self.entryforselflearntimevalue
         )
-        self.entryforselflearntime.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 80,
-                                         y=GAP_SIZE + OPTIONS_HEIGHT * 3 + GAP_SIZE + OPTIONS_HEIGHT * 5)
+        self.entryforselflearntime.place(x=GapSize + BoadSize + GapSize + 80,
+                                         y=GapSize + OptionsHight * 3 + GapSize + OptionsHight * 5)
 
         # 変数宣言
-        self.boadsurface = np.zeros((NUMBER_OF_SQUARE + 2, NUMBER_OF_SQUARE + 2), dtype=int)
+        self.boadsurface = np.zeros((TheNumberOfSquare + 2, TheNumberOfSquare + 2), dtype=int)
         self.player = [0, 0]
         self.playerAI = [0, 0]
         self.turnnumber = 0
@@ -823,7 +825,7 @@ class mainclass():
             self.entryforrunnningtime.config(state="disable")  # 暫定5
 
             messagebox.showwarning("error／(^o^)＼", "そのボタンは現在準備中です。")  # 暫定5
-            self.gameorrun = LEARNING_MODE
+            self.gameorrun = RunMode
         else:
             self.messagelabel.config(text="そのボタンは押せません")
 
@@ -834,17 +836,17 @@ class mainclass():
             color = self.boadsurface[x2][y2] * -1
         # 色変更
         self.boadsurface[x2][y2] = color
-        if color == OUT_OF_BOARD:
+        if color == OutBoad:
             pass
-        elif color == DARK:
-            self.gamecanvas.create_oval(x1 * SQUARE_SIZE + 2, y1 * SQUARE_SIZE + 2, (x1 + 1) * SQUARE_SIZE - 2,
-                                        (y1 + 1) * SQUARE_SIZE - 2, fill="black")
-        elif color == GREEN:
-            self.gamecanvas.create_oval(x1 * SQUARE_SIZE + 2, y1 * SQUARE_SIZE + 2, (x1 + 1) * SQUARE_SIZE - 2,
-                                        (y1 + 1) * SQUARE_SIZE - 2, fill="green", outline="green")
-        elif color == LIGHT:
-            self.gamecanvas.create_oval(x1 * SQUARE_SIZE + 2, y1 * SQUARE_SIZE + 2, (x1 + 1) * SQUARE_SIZE - 2,
-                                        (y1 + 1) * SQUARE_SIZE - 2, fill="white")
+        elif color == Black:
+            self.gamecanvas.create_oval(x1 * SquareSize + 2, y1 * SquareSize + 2, (x1 + 1) * SquareSize - 2,
+                                        (y1 + 1) * SquareSize - 2, fill="black")
+        elif color == Green:
+            self.gamecanvas.create_oval(x1 * SquareSize + 2, y1 * SquareSize + 2, (x1 + 1) * SquareSize - 2,
+                                        (y1 + 1) * SquareSize - 2, fill="green", outline="green")
+        elif color == White:
+            self.gamecanvas.create_oval(x1 * SquareSize + 2, y1 * SquareSize + 2, (x1 + 1) * SquareSize - 2,
+                                        (y1 + 1) * SquareSize - 2, fill="white")
         else:
             messagebox.showerror("error／(^o^)＼", "不正な値(color)。強制終了します。")
             sys.exit(1)
@@ -857,8 +859,8 @@ class mainclass():
         print(self.record)
         # 勝敗
         gameendmessage = 0
-        blackcount = np.count_nonzero(self.boadsurface == DARK)
-        whitecount = np.count_nonzero(self.boadsurface == LIGHT)
+        blackcount = np.count_nonzero(self.boadsurface == Black)
+        whitecount = np.count_nonzero(self.boadsurface == White)
         if blackcount > whitecount:
             gameendmessage = str(blackcount) + "対" + str(whitecount) + "で黒の勝ち"
             messagebox.showinfo("勝敗", gameendmessage)
@@ -869,19 +871,19 @@ class mainclass():
             gameendmessage = str(blackcount) + "対" + str(whitecount) + "で引き分け"
             messagebox.showinfo("勝敗", gameendmessage)
         # 全部green
-        for i in range(NUMBER_OF_SQUARE):
-            for j in range(NUMBER_OF_SQUARE):
-                self.OverTurn(i, j, False, GREEN)
+        for i in range(TheNumberOfSquare):
+            for j in range(TheNumberOfSquare):
+                self.OverTurn(i, j, False, Green)
         # AIにゲームの終わりを伝える
-        if self.player[T_DARK] == AI_PLAYER:
-            self.playerAI[T_DARK].endprocess()
-        if self.player[T_LIGHT] == AI_PLAYER:
-            self.playerAI[T_LIGHT].endprocess()
+        if self.player[FirstP] == AIPlayer:
+            self.playerAI[FirstP].endprocess()
+        if self.player[SecondP] == AIPlayer:
+            self.playerAI[SecondP].endprocess()
         # AI破壊先行から消してしまうとずれて後攻が先行になってしまうのでわかりやすく後攻から消す
-        if self.player[T_LIGHT] == AI_PLAYER:
-            del self.playerAI[T_LIGHT]
-        if self.player[T_DARK] == AI_PLAYER:
-            del self.playerAI[T_DARK]
+        if self.player[SecondP] == AIPlayer:
+            del self.playerAI[SecondP]
+        if self.player[FirstP] == AIPlayer:
+            del self.playerAI[FirstP]
         # 枠確保
         self.playerAI = [0, 0]
         # ボードクリック不可stop不可その他可
@@ -902,18 +904,18 @@ class mainclass():
 
     def Standby(self):
         # 駒を初期配置にする
-        for i in range(NUMBER_OF_SQUARE):
-            for j in range(NUMBER_OF_SQUARE):
-                self.OverTurn(i, j, False, GREEN)
-        self.OverTurn(3, 3, False, LIGHT)
-        self.OverTurn(3, 4, False, DARK)
-        self.OverTurn(4, 4, False, LIGHT)
-        self.OverTurn(4, 3, False, DARK)
-        for i in range(NUMBER_OF_SQUARE + 2):
-            self.OverTurn(i - 1, -1, False, OUT_OF_BOARD)
-            self.OverTurn(NUMBER_OF_SQUARE, i - 1, False, OUT_OF_BOARD)
-            self.OverTurn(i - 1, NUMBER_OF_SQUARE, False, OUT_OF_BOARD)
-            self.OverTurn(-1, i - 1, False, OUT_OF_BOARD)
+        for i in range(TheNumberOfSquare):
+            for j in range(TheNumberOfSquare):
+                self.OverTurn(i, j, False, Green)
+        self.OverTurn(3, 3, False, White)
+        self.OverTurn(3, 4, False, Black)
+        self.OverTurn(4, 4, False, White)
+        self.OverTurn(4, 3, False, Black)
+        for i in range(TheNumberOfSquare + 2):
+            self.OverTurn(i - 1, -1, False, OutBoad)
+            self.OverTurn(TheNumberOfSquare, i - 1, False, OutBoad)
+            self.OverTurn(i - 1, TheNumberOfSquare, False, OutBoad)
+            self.OverTurn(-1, i - 1, False, OutBoad)
 
     def PassTheTurn(self):
         self.Turn1()
@@ -923,29 +925,29 @@ class mainclass():
         # ターン進める
         if self.turnnumber == 0:
             self.turnnumber = 1
-            self.firstornot = T_DARK
+            self.firstornot = FirstP
         else:
-            if self.firstornot == T_DARK:
-                self.firstornot = T_LIGHT
-            elif self.firstornot == T_LIGHT:
+            if self.firstornot == FirstP:
+                self.firstornot = SecondP
+            elif self.firstornot == SecondP:
                 self.turnnumber += 1
-                self.firstornot = T_DARK
+                self.firstornot = FirstP
             else:
                 messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
                 sys.exit(1)
         # おける場所確認
-        moveableornotA, putablepointA = CalculateBoard.calculate_where_placeable(self.boadsurface, self.firstornot)
-        if moveableornotA == STATE_GAME_END:  # お互いパスなら
+        moveableornotA, putablepointA = searchandscan.Search(self.boadsurface, self.firstornot)
+        if moveableornotA == DoublePass:  # お互いパスなら
             # ゲーム終わり
-            nextmoving = [STATE_GAME_END, [0, 0]]
-        elif moveableornotA == STATE_PASS:  # 置けないならパス
-            if self.player[self.firstornot] == HUMAN:
+            nextmoving = [DoublePass, [0, 0]]
+        elif moveableornotA == NotMoveable:  # 置けないならパス
+            if self.player[self.firstornot] == Human:
                 messagebox.showinfo("パス", "おける場所がありません,ターンをパスします")
             else:
                 self.playerAI[self.firstornot].passprocess()
-            nextmoving = [STATE_PASS, [0, 0]]
-        elif moveableornotA == STATE_PLACE:  # おける場合
-            if self.player[self.firstornot] == HUMAN:
+            nextmoving = [NotMoveable, [0, 0]]
+        elif moveableornotA == Moveable:  # おける場合
+            if self.player[self.firstornot] == Human:
                 messagebox.showerror("error／(^o^)＼", "不正な値(player[firstornot])。強制終了します。")
                 sys.exit(1)
             else:
@@ -953,7 +955,7 @@ class mainclass():
                 putpoint = self.playerAI[self.firstornot].playprocess(copy.copy(self.boadsurface), putablepointA,
                                                                       self.firstornot, self.turnnumber)
                 # 次へ
-                nextmoving = [STATE_PLACE, putpoint]
+                nextmoving = [Moveable, putpoint]
         else:
             messagebox.showerror("error／(^o^)＼", "不正な値(moveableornotA)。強制終了します。")
             sys.exit(1)
@@ -963,22 +965,21 @@ class mainclass():
 
         tempfirstornotC = 0
         # 手を表記
-        gamemessage = str(pointB[X_AXIS] + 1) + "," + str(pointB[Y_AXIS] + 1)
+        gamemessage = str(pointB[cX] + 1) + "," + str(pointB[cY] + 1)
         self.messagelabel.config(text=gamemessage)
         # 先行後攻を変換
-        if self.firstornot == T_DARK:
-            tempfirstornotC = TURN_OF_DARK
-        elif self.firstornot == T_LIGHT:
-            tempfirstornotC = TURN_OF_WHITE
+        if self.firstornot == FirstP:
+            tempfirstornotC = FirstT
+        elif self.firstornot == SecondP:
+            tempfirstornotC = SecondT
         else:
             messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
             sys.exit(1)
         # ひっくり返す場所をもらう
-        putableornotC, turnplaceB = CalculateBoard.calculate_where_reverse(pointB[X_AXIS], pointB[Y_AXIS],
-                                                                          tempfirstornotC, self.boadsurface)
+        putableornotC, turnplaceB = searchandscan.Scan(pointB[cX], pointB[cY], tempfirstornotC, self.boadsurface)
         # おけるか否か
-        if putableornotC == NOT_PLACEABLE:
-            if self.player[self.firstornot] == HUMAN:
+        if putableornotC == NotPuttable:
+            if self.player[self.firstornot] == Human:
                 messagebox.showerror("error／(^o^)＼", "不正な値(player[firstornot])。強制終了します。")
                 sys.exit(1)
             else:
@@ -986,50 +987,47 @@ class mainclass():
                 sys.exit(1)
         else:
             # 押せる場所表示を消す
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    self.gamecanvas.create_rectangle(i * SQUARE_SIZE + 1, j * SQUARE_SIZE + 1,
-                                                     (i + 1) * SQUARE_SIZE - 1,
-                                                     (j + 1) * SQUARE_SIZE - 1, outline="green")
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    self.gamecanvas.create_rectangle(i * SquareSize + 1, j * SquareSize + 1, (i + 1) * SquareSize - 1,
+                                                     (j + 1) * SquareSize - 1, outline="green")
             # 押した場所表示をする
-            self.gamecanvas.create_rectangle(pointB[X_AXIS] * SQUARE_SIZE + 1, pointB[Y_AXIS] * SQUARE_SIZE + 1,
-                                             (pointB[X_AXIS] + 1) * SQUARE_SIZE - 1,
-                                             (pointB[Y_AXIS] + 1) * SQUARE_SIZE - 1,
+            self.gamecanvas.create_rectangle(pointB[cX] * SquareSize + 1, pointB[cY] * SquareSize + 1,
+                                             (pointB[cX] + 1) * SquareSize - 1, (pointB[cY] + 1) * SquareSize - 1,
                                              outline="yellow")
             # 画面を更新して0.01秒待つ
             self.gamecanvas.update()
             sleep(0.01)
             # 押した場所表示を消す
-            self.gamecanvas.create_rectangle(pointB[X_AXIS] * SQUARE_SIZE + 1, pointB[Y_AXIS] * SQUARE_SIZE + 1,
-                                             (pointB[X_AXIS] + 1) * SQUARE_SIZE - 1,
-                                             (pointB[Y_AXIS] + 1) * SQUARE_SIZE - 1,
+            self.gamecanvas.create_rectangle(pointB[cX] * SquareSize + 1, pointB[cY] * SquareSize + 1,
+                                             (pointB[cX] + 1) * SquareSize - 1, (pointB[cY] + 1) * SquareSize - 1,
                                              outline="green")
             # 全マス調べてひっくり返る場所表示をする
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if turnplaceB[i][j]:
-                        self.gamecanvas.create_rectangle(i * SQUARE_SIZE + 1, j * SQUARE_SIZE + 1,
-                                                         (i + 1) * SQUARE_SIZE - 1, (j + 1) * SQUARE_SIZE - 1,
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if turnplaceB[i][j] == True:
+                        self.gamecanvas.create_rectangle(i * SquareSize + 1, j * SquareSize + 1,
+                                                         (i + 1) * SquareSize - 1, (j + 1) * SquareSize - 1,
                                                          outline="yellow")
             # 画面を更新して0.01秒待つ
             self.gamecanvas.update()
             sleep(0.01)
             # 全マス調べてひっくり返す
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if turnplaceB[i][j]:
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if turnplaceB[i][j] == True:
                         self.OverTurn(x1=i, y1=j, option1=True)
             # 押した場所に駒をおく
-            self.OverTurn(pointB[X_AXIS], pointB[Y_AXIS], False, tempfirstornotC)
+            self.OverTurn(pointB[cX], pointB[cY], False, tempfirstornotC)
             # 画面を更新して0.01秒待つ
             self.gamecanvas.update()
             sleep(0.01)
             # 全マス調べてひっくり返る場所表示を消す
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if turnplaceB[i][j]:
-                        self.gamecanvas.create_rectangle(i * SQUARE_SIZE + 1, j * SQUARE_SIZE + 1,
-                                                         (i + 1) * SQUARE_SIZE - 1, (j + 1) * SQUARE_SIZE - 1,
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if turnplaceB[i][j] == True:
+                        self.gamecanvas.create_rectangle(i * SquareSize + 1, j * SquareSize + 1,
+                                                         (i + 1) * SquareSize - 1, (j + 1) * SquareSize - 1,
                                                          outline="green")
             # 相手AIに伝える為のデータ
             self.record.append(copy.copy(pointB))
@@ -1038,11 +1036,11 @@ class mainclass():
     def GameAIvsAI(self):
         while True:
             moveableornotC, putpointB = self.Turn2()
-            if moveableornotC == PLACEABLE:
+            if moveableornotC == Puttable:
                 self.move2(putpointB)
-            elif moveableornotC == NOT_PLACEABLE:
+            elif moveableornotC == NotPuttable:
                 pass
-            elif moveableornotC == STATE_GAME_END:
+            elif moveableornotC == DoublePass:
                 break
             else:
                 messagebox.showerror("error／(^o^)＼", "不正な値(moveableornotC)。強制終了します。")
@@ -1053,22 +1051,21 @@ class mainclass():
 
         tempfirstornotC = 0
         # 手を表記
-        gamemessage = str(pointB[X_AXIS] + 1) + "," + str(pointB[Y_AXIS] + 1)
+        gamemessage = str(pointB[cX] + 1) + "," + str(pointB[cY] + 1)
         self.messagelabel.config(text=gamemessage)
         # 先行後攻を変換
-        if self.firstornot == T_DARK:
-            tempfirstornotC = TURN_OF_DARK
-        elif self.firstornot == T_LIGHT:
-            tempfirstornotC = TURN_OF_WHITE
+        if self.firstornot == FirstP:
+            tempfirstornotC = FirstT
+        elif self.firstornot == SecondP:
+            tempfirstornotC = SecondT
         else:
             messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
             sys.exit(1)
         # ひっくり返す場所をもらう
-        putableornotC, turnplaceB = CalculateBoard.calculate_where_reverse(pointB[X_AXIS], pointB[Y_AXIS],
-                                                                          tempfirstornotC, self.boadsurface)
+        putableornotC, turnplaceB = searchandscan.Scan(pointB[cX], pointB[cY], tempfirstornotC, self.boadsurface)
         # おけるか否か
-        if putableornotC == NOT_PLACEABLE:
-            if self.player[self.firstornot] == HUMAN:
+        if putableornotC == NotPuttable:
+            if self.player[self.firstornot] == Human:
                 self.messagelabel.config(text="そこにはおけません")
                 # boadclickで押せなくなっていたボードを押せるようにする
                 self.boadclickable = True
@@ -1077,50 +1074,47 @@ class mainclass():
                 sys.exit(1)
         else:
             # 押せる場所表示を消す
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    self.gamecanvas.create_rectangle(i * SQUARE_SIZE + 1, j * SQUARE_SIZE + 1,
-                                                     (i + 1) * SQUARE_SIZE - 1,
-                                                     (j + 1) * SQUARE_SIZE - 1, outline="green")
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    self.gamecanvas.create_rectangle(i * SquareSize + 1, j * SquareSize + 1, (i + 1) * SquareSize - 1,
+                                                     (j + 1) * SquareSize - 1, outline="green")
             # 押した場所表示をする
-            self.gamecanvas.create_rectangle(pointB[X_AXIS] * SQUARE_SIZE + 1, pointB[Y_AXIS] * SQUARE_SIZE + 1,
-                                             (pointB[X_AXIS] + 1) * SQUARE_SIZE - 1,
-                                             (pointB[Y_AXIS] + 1) * SQUARE_SIZE - 1,
+            self.gamecanvas.create_rectangle(pointB[cX] * SquareSize + 1, pointB[cY] * SquareSize + 1,
+                                             (pointB[cX] + 1) * SquareSize - 1, (pointB[cY] + 1) * SquareSize - 1,
                                              outline="yellow")
             # 画面を更新して0.01秒待つ
             self.gamecanvas.update()
             sleep(0.01)
             # 押した場所表示を消す
-            self.gamecanvas.create_rectangle(pointB[X_AXIS] * SQUARE_SIZE + 1, pointB[Y_AXIS] * SQUARE_SIZE + 1,
-                                             (pointB[X_AXIS] + 1) * SQUARE_SIZE - 1,
-                                             (pointB[Y_AXIS] + 1) * SQUARE_SIZE - 1,
+            self.gamecanvas.create_rectangle(pointB[cX] * SquareSize + 1, pointB[cY] * SquareSize + 1,
+                                             (pointB[cX] + 1) * SquareSize - 1, (pointB[cY] + 1) * SquareSize - 1,
                                              outline="green")
             # 全マス調べてひっくり返る場所表示をする
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if turnplaceB[i][j]:
-                        self.gamecanvas.create_rectangle(i * SQUARE_SIZE + 1, j * SQUARE_SIZE + 1,
-                                                         (i + 1) * SQUARE_SIZE - 1, (j + 1) * SQUARE_SIZE - 1,
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if turnplaceB[i][j] == True:
+                        self.gamecanvas.create_rectangle(i * SquareSize + 1, j * SquareSize + 1,
+                                                         (i + 1) * SquareSize - 1, (j + 1) * SquareSize - 1,
                                                          outline="yellow")
             # 画面を更新して0.01秒待つ
             self.gamecanvas.update()
             sleep(0.01)
             # 全マス調べてひっくり返す
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if turnplaceB[i][j]:
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if turnplaceB[i][j] == True:
                         self.OverTurn(x1=i, y1=j, option1=True)
             # 押した場所に駒をおく
-            self.OverTurn(pointB[X_AXIS], pointB[Y_AXIS], False, tempfirstornotC)
+            self.OverTurn(pointB[cX], pointB[cY], False, tempfirstornotC)
             # 画面を更新して0.01秒待つ
             self.gamecanvas.update()
             sleep(0.01)
             # 全マス調べてひっくり返る場所表示を消す
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if turnplaceB[i][j]:
-                        self.gamecanvas.create_rectangle(i * SQUARE_SIZE + 1, j * SQUARE_SIZE + 1,
-                                                         (i + 1) * SQUARE_SIZE - 1, (j + 1) * SQUARE_SIZE - 1,
+            for i in range(TheNumberOfSquare):
+                for j in range(TheNumberOfSquare):
+                    if turnplaceB[i][j] == True:
+                        self.gamecanvas.create_rectangle(i * SquareSize + 1, j * SquareSize + 1,
+                                                         (i + 1) * SquareSize - 1, (j + 1) * SquareSize - 1,
                                                          outline="green")
             # 相手AIに伝える為のデータ
             self.record.append(copy.copy(pointB))
@@ -1131,10 +1125,10 @@ class mainclass():
         # クリック個所を調べて次につなげる
         x3 = self.gamecanvas.canvasx(event.x)
         y3 = self.gamecanvas.canvasx(event.y)
-        x4 = int(x3 // SQUARE_SIZE)
-        y4 = int(y3 // SQUARE_SIZE)
+        x4 = int(x3 // SquareSize)
+        y4 = int(y3 // SquareSize)
         pointA = [x4, y4]
-        if not self.boadclickable:
+        if self.boadclickable == False:
             self.messagelabel.config(text="現在ボードクリック不可です")
         else:
             # ボード押せないようにする
@@ -1146,35 +1140,35 @@ class mainclass():
         # ターン進める
         if self.turnnumber == 0:
             self.turnnumber = 1
-            self.firstornot = T_DARK
+            self.firstornot = FirstP
         else:
-            if self.firstornot == T_DARK:
-                self.firstornot = T_LIGHT
-            elif self.firstornot == T_LIGHT:
+            if self.firstornot == FirstP:
+                self.firstornot = SecondP
+            elif self.firstornot == SecondP:
                 self.turnnumber += 1
-                self.firstornot = T_DARK
+                self.firstornot = FirstP
             else:
                 messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
                 sys.exit(1)
         # おける場所確認
-        moveableornotA, putablepointA = CalculateBoard.calculate_where_placeable(self.boadsurface, self.firstornot)
-        if moveableornotA == STATE_GAME_END:  # お互いパスなら
+        moveableornotA, putablepointA = searchandscan.Search(self.boadsurface, self.firstornot)
+        if moveableornotA == DoublePass:  # お互いパスなら
             # ゲーム終わり
             self.GameEnd1()
-        elif moveableornotA == STATE_PASS:  # 置けないならパス
-            if self.player[self.firstornot] == HUMAN:
+        elif moveableornotA == NotMoveable:  # 置けないならパス
+            if self.player[self.firstornot] == Human:
                 messagebox.showinfo("パス", "おける場所がありません,ターンをパスします")
             else:
                 self.playerAI[self.firstornot].passprocess()
             self.PassTheTurn()
-        elif moveableornotA == STATE_PLACE:  # おける場合
-            if self.player[self.firstornot] == HUMAN:
+        elif moveableornotA == Moveable:  # おける場合
+            if self.player[self.firstornot] == Human:
                 # おける場所を色で伝える
-                for i in range(NUMBER_OF_SQUARE):
-                    for j in range(NUMBER_OF_SQUARE):
-                        if putablepointA[i][j] == PLACEABLE:
-                            self.gamecanvas.create_rectangle(i * SQUARE_SIZE + 1, j * SQUARE_SIZE + 1,
-                                                             (i + 1) * SQUARE_SIZE - 1, (j + 1) * SQUARE_SIZE - 1,
+                for i in range(TheNumberOfSquare):
+                    for j in range(TheNumberOfSquare):
+                        if putablepointA[i][j] == Puttable:
+                            self.gamecanvas.create_rectangle(i * SquareSize + 1, j * SquareSize + 1,
+                                                             (i + 1) * SquareSize - 1, (j + 1) * SquareSize - 1,
                                                              outline="yellow")
                 # ボードクリック可
                 self.boadclickable = True
@@ -1193,25 +1187,25 @@ class mainclass():
         # モードを読み込みAIを作る
         playerAI = [0, 0]
         if self.comboforfirstvalue.get() == "人間":
-            self.player[T_DARK] = HUMAN
-            self.playerAI[T_DARK] = 0
+            self.player[FirstP] = Human
+            self.playerAI[FirstP] = 0
         elif self.comboforfirstvalue.get() == "ランダム":
-            self.player[T_DARK] = AI_PLAYER
-            self.playerAI[T_DARK] = AIRandom()
+            self.player[FirstP] = AIPlayer
+            self.playerAI[FirstP] = AIRandom()
         elif self.comboforfirstvalue.get() == "優先順位型":
-            self.player[T_DARK] = AI_PLAYER
-            self.playerAI[T_DARK] = AILookPriority()
+            self.player[FirstP] = AIPlayer
+            self.playerAI[FirstP] = AILookPriority()
         elif self.comboforfirstvalue.get() == "先読み型":
-            self.player[T_DARK] = AI_PLAYER
-            self.playerAI[T_DARK] = AIReadAhead()
+            self.player[FirstP] = AIPlayer
+            self.playerAI[FirstP] = AIReadAhead()
         elif self.comboforfirstvalue.get() == "強化学習":
-            self.player[T_DARK] = AI_PLAYER
-            self.playerAI[T_DARK] = AIReinforcementLearning(self.entryforrunnningtimevalue.get())
+            self.player[FirstP] = AIPlayer
+            self.playerAI[FirstP] = AIReinforcementLearning(self.entryforrunnningtimevalue.get())
             messagebox.showerror("error／(^o^)＼", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
             sys.exit(1)  # 暫定2
         elif self.comboforfirstvalue.get() == "進化学習":
-            self.player[T_DARK] = AI_PLAYER
-            self.playerAI[T_DARK] = AIGA(self.entryforrunnningtimevalue.get())
+            self.player[FirstP] = AIPlayer
+            self.playerAI[FirstP] = AIGA(self.entryforrunnningtimevalue.get())
             messagebox.showerror("error／(^o^)＼", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
             sys.exit(1)  # 暫定2
         else:
@@ -1219,31 +1213,31 @@ class mainclass():
             sys.exit(1)
 
         if self.comboforsecondvalue.get() == "人間":
-            self.player[T_LIGHT] = HUMAN
-            self.playerAI[T_LIGHT] = 0
+            self.player[SecondP] = Human
+            self.playerAI[SecondP] = 0
         elif self.comboforsecondvalue.get() == "ランダム":
-            self.player[T_LIGHT] = AI_PLAYER
-            self.playerAI[T_LIGHT] = AIRandom()
+            self.player[SecondP] = AIPlayer
+            self.playerAI[SecondP] = AIRandom()
         elif self.comboforsecondvalue.get() == "優先順位型":
-            self.player[T_LIGHT] = AI_PLAYER
-            self.playerAI[T_LIGHT] = AILookPriority()
+            self.player[SecondP] = AIPlayer
+            self.playerAI[SecondP] = AILookPriority()
         elif self.comboforsecondvalue.get() == "先読み型":
-            self.player[T_LIGHT] = AI_PLAYER
-            self.playerAI[T_LIGHT] = AIReadAhead()
+            self.player[SecondP] = AIPlayer
+            self.playerAI[SecondP] = AIReadAhead()
         elif self.comboforsecondvalue.get() == "強化学習":
-            self.player[T_LIGHT] = AI_PLAYER
+            self.player[SecondP] = AIPlayer
             if self.comboforfirstvalue.get() == "強化学習":
-                self.playerAI[T_LIGHT] = playerAI[T_DARK]
+                self.playerAI[SecondP] = playerAI[FirstP]
             else:
-                self.playerAI[T_LIGHT] = AIReinforcementLearning(self.entryforrunnningtimevalue.get())
+                self.playerAI[SecondP] = AIReinforcementLearning(self.entryforrunnningtimevalue.get())
             messagebox.showerror("error／(^o^)＼", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
             sys.exit(1)  # 暫定2
         elif self.comboforsecondvalue.get() == "進化学習":
-            self.player[T_LIGHT] = AI_PLAYER
+            self.player[SecondP] = AIPlayer
             if self.comboforfirstvalue.get() == "進化学習":
-                self.playerAI[T_LIGHT] = playerAI[T_DARK]
+                self.playerAI[SecondP] = playerAI[FirstP]
             else:
-                self.playerAI[T_LIGHT] = AIGA(self.entryforrunnningtimevalue.get())
+                self.playerAI[SecondP] = AIGA(self.entryforrunnningtimevalue.get())
             messagebox.showerror("error／(^o^)＼", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
             sys.exit(1)  # 暫定2
         else:
@@ -1256,18 +1250,18 @@ class mainclass():
         self.stopbutton.config(state="disable")  # 暫定3
         # ターン数初期化
         self.turnnumber = 0
-        self.firstornot = T_DARK
+        self.firstornot = FirstP
         # 人間がいるかどうかで分岐
-        if self.player[T_DARK] == HUMAN:
+        if self.player[FirstP] == Human:
             self.Turn1()
-        elif self.player[T_LIGHT] == HUMAN:
+        elif self.player[SecondP] == Human:
             self.Turn1()
         else:
             self.GameAIvsAI()
 
     def gamestartbuttonclick(self, event):
 
-        if self.gamestartbuttonclickable:
+        if self.gamestartbuttonclickable == True:
             # 全ボタン不可
             self.gamestartbuttonclickable = False
             self.gamestartbutton.config(state="disable")
@@ -1284,7 +1278,7 @@ class mainclass():
             self.selflearnbutton.config(state="disable")
             self.entryforrunnningtime.config(state="disable")
             # ゲームをスタートさせる
-            self.gameorrun = PLAY_GAME_MODE
+            self.gameorrun = GameMode
             self.Gamestart()
         else:
             self.messagelabel.config(text="そのボタンは押せません")
