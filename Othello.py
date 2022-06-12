@@ -131,7 +131,7 @@ class AILookPriority:
             if aiputablepoint[aipoint[X_AXIS], aipoint[Y_AXIS]] == PLACEABLE:
                 break
         else:
-            messagebox.showerror("error／(^o^)＼", "AILookPriorityはおける場所を見つけられませんでした。強制終了します。")
+            messagebox.showerror("error", "AILookPriorityはおける場所を見つけられませんでした。強制終了します。")
             sys.exit(1)
         return aipoint
 
@@ -167,12 +167,12 @@ class AIReadAhead:
         elif aifirstornot == T_LIGHT:
             self.firstornotT2 = TURN_OF_WHITE
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
+            messagebox.showerror("error", "不正な値(firstornot)。強制終了します。")
             sys.exit(1)
         firstornotT = self.firstornotT2
         moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(aiboadsurface, firstornotT=firstornotT)
         if moveableornot != STATE_PLACE:
-            messagebox.showerror("error／(^o^)＼", "不正な値(moveableornot)。強制終了します。")
+            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
             sys.exit(1)
         if aiturnnumber >= 26:
             scoremax = None
@@ -279,7 +279,7 @@ class AIReadAhead:
             score = self.selectminscore(boadsurface2, depth, alpha, beta, firstornotT * -1)
             return score
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(moveableornot)。強制終了します。")
+            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
             sys.exit(1)
 
     def selectminscore(self, boadsurface2, depth, alpha, beta, firstornotT):
@@ -314,7 +314,7 @@ class AIReadAhead:
             score = self.selectmaxscore(boadsurface2, depth, alpha, beta, firstornotT * -1)
             return score
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(moveableornot)。強制終了します。")
+            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
             sys.exit(1)
 
     def countmypiece(self, boadsurface2):
@@ -351,7 +351,7 @@ class AIReadAhead:
                             scoremax = score
             return scoremax
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(moveableornot)。強制終了します。")
+            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
             sys.exit(1)
 
     def selectminpiece(self, boadsurface2, alpha, beta, firstornotT):
@@ -385,7 +385,7 @@ class AIReadAhead:
                             scoremin = score
             return scoremin
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(moveableornot)。強制終了します。")
+            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
             sys.exit(1)
 
 
@@ -547,7 +547,7 @@ class CalculateBoard:
                         # ひっくり返す場所あるにする
                         placeable_or_not = PLACEABLE
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(pointC又はboadsurface2)。強制終了します。")
+            messagebox.showerror("error", "不正な値(pointC又はboadsurface2)。強制終了します。")
             sys.exit(1)
         return placeable_or_not, reverse_point
 
@@ -566,7 +566,7 @@ class CalculateBoard:
             elif idx_turn == T_LIGHT:
                 tempfirstornotA = TURN_OF_WHITE
             else:
-                messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
+                messagebox.showerror("error", "不正な値(firstornot)。強制終了します。")
                 sys.exit(1)
         # 一マスごとにおける場所を調べておける場所があるかをおける場所を記録した配列に記録、これを全マスやり、一マスでもおける場所があるか調べる
         for i in range(NUMBER_OF_SQUARE):
@@ -604,7 +604,7 @@ class CalculateBoard:
             elif firstornotP == T_LIGHT:
                 tempfirstornotA = TURN_OF_WHITE
             else:
-                messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
+                messagebox.showerror("error", "不正な値(firstornot)。強制終了します。")
                 sys.exit(1)
         # 一マスごとにおける場所を調べておける場所があるかをおける場所を記録した配列に記録、これを全マスやり、一マスでもおける場所があるか調べる
         for i in range(NUMBER_OF_SQUARE):
@@ -633,12 +633,12 @@ class mainclass():
     def __init__(self):
 
         # 核となるもの？
-        self.root = Tk()
-        self.root.title('othello')
+        self.tk_root = Tk()
+        self.tk_root.title('othello')
 
         # ウィンドウ作成
         self.mainframe = ttk.Frame(
-            self.root,
+            self.tk_root,
             height=GAP_SIZE * 2 + BOARD_SIZE + OPTIONS_HEIGHT,
             width=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 200 + GAP_SIZE,
             relief='sunken',
@@ -823,7 +823,7 @@ class mainclass():
             self.selflearnbutton.config(state="disable")  # 暫定5
             self.entryforrunnningtime.config(state="disable")  # 暫定5
 
-            messagebox.showwarning("error／(^o^)＼", "そのボタンは現在準備中です。")  # 暫定5
+            messagebox.showwarning("error", "そのボタンは現在準備中です。")  # 暫定5
             self.gameorrun = LEARNING_MODE
         else:
             self.messagelabel.config(text="そのボタンは押せません")
@@ -847,11 +847,11 @@ class mainclass():
             self.gamecanvas.create_oval(x1 * SQUARE_SIZE + 2, y1 * SQUARE_SIZE + 2, (x1 + 1) * SQUARE_SIZE - 2,
                                         (y1 + 1) * SQUARE_SIZE - 2, fill="white")
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(color)。強制終了します。")
+            messagebox.showerror("error", "不正な値(color)。強制終了します。")
             sys.exit(1)
 
     def stopbuttonclick(self, event):
-        messagebox.showwarning("error／(^o^)＼", "stopボタンは現在準備中です。")  # 暫定3
+        messagebox.showwarning("error", "stopボタンは現在準備中です。")  # 暫定3
 
     def GameEnd1(self):
 
@@ -932,7 +932,7 @@ class mainclass():
                 self.turnnumber += 1
                 self.firstornot = T_DARK
             else:
-                messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
+                messagebox.showerror("error", "不正な値(firstornot)。強制終了します。")
                 sys.exit(1)
         # おける場所確認
         moveableornotA, putablepointA = CalculateBoard.calculate_where_placeable(self.boadsurface, self.firstornot)
@@ -947,7 +947,7 @@ class mainclass():
             nextmoving = [STATE_PASS, [0, 0]]
         elif moveableornotA == STATE_PLACE:  # おける場合
             if self.player[self.firstornot] == HUMAN:
-                messagebox.showerror("error／(^o^)＼", "不正な値(player[firstornot])。強制終了します。")
+                messagebox.showerror("error", "不正な値(player[firstornot])。強制終了します。")
                 sys.exit(1)
             else:
                 # AIに情報渡す
@@ -956,7 +956,7 @@ class mainclass():
                 # 次へ
                 nextmoving = [STATE_PLACE, putpoint]
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(moveableornotA)。強制終了します。")
+            messagebox.showerror("error", "不正な値(moveableornotA)。強制終了します。")
             sys.exit(1)
         return nextmoving
 
@@ -972,7 +972,7 @@ class mainclass():
         elif self.firstornot == T_LIGHT:
             tempfirstornotC = TURN_OF_WHITE
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
+            messagebox.showerror("error", "不正な値(firstornot)。強制終了します。")
             sys.exit(1)
         # ひっくり返す場所をもらう
         putableornotC, turnplaceB = CalculateBoard.calculate_where_reverse(pointB[X_AXIS], pointB[Y_AXIS],
@@ -980,10 +980,10 @@ class mainclass():
         # おけるか否か
         if putableornotC == NOT_PLACEABLE:
             if self.player[self.firstornot] == HUMAN:
-                messagebox.showerror("error／(^o^)＼", "不正な値(player[firstornot])。強制終了します。")
+                messagebox.showerror("error", "不正な値(player[firstornot])。強制終了します。")
                 sys.exit(1)
             else:
-                messagebox.showerror("error／(^o^)＼", "AIが不正な場所に駒がおこうとしました。強制終了します。")
+                messagebox.showerror("error", "AIが不正な場所に駒がおこうとしました。強制終了します。")
                 sys.exit(1)
         else:
             # 押せる場所表示を消す
@@ -1046,7 +1046,7 @@ class mainclass():
             elif moveableornotC == STATE_GAME_END:
                 break
             else:
-                messagebox.showerror("error／(^o^)＼", "不正な値(moveableornotC)。強制終了します。")
+                messagebox.showerror("error", "不正な値(moveableornotC)。強制終了します。")
                 sys.exit(1)
         self.GameEnd1()
 
@@ -1062,7 +1062,7 @@ class mainclass():
         elif self.firstornot == T_LIGHT:
             tempfirstornotC = TURN_OF_WHITE
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
+            messagebox.showerror("error", "不正な値(firstornot)。強制終了します。")
             sys.exit(1)
         # ひっくり返す場所をもらう
         putableornotC, turnplaceB = CalculateBoard.calculate_where_reverse(pointB[X_AXIS], pointB[Y_AXIS],
@@ -1074,7 +1074,7 @@ class mainclass():
                 # boadclickで押せなくなっていたボードを押せるようにする
                 self.boadclickable = True
             else:
-                messagebox.showerror("error／(^o^)＼", "AIが不正な場所に駒がおこうとしました。強制終了します。")
+                messagebox.showerror("error", "AIが不正な場所に駒がおこうとしました。強制終了します。")
                 sys.exit(1)
         else:
             # 押せる場所表示を消す
@@ -1155,7 +1155,7 @@ class mainclass():
                 self.turnnumber += 1
                 self.firstornot = T_DARK
             else:
-                messagebox.showerror("error／(^o^)＼", "不正な値(firstornot)。強制終了します。")
+                messagebox.showerror("error", "不正な値(firstornot)。強制終了します。")
                 sys.exit(1)
         # おける場所確認
         moveableornotA, putablepointA = CalculateBoard.calculate_where_placeable(self.boadsurface, self.firstornot)
@@ -1186,7 +1186,7 @@ class mainclass():
                 # 次へ
                 self.move1(putpoint)
         else:
-            messagebox.showerror("error／(^o^)＼", "不正な値(moveableornotA)。強制終了します。")
+            messagebox.showerror("error", "不正な値(moveableornotA)。強制終了します。")
             sys.exit(1)
 
     def Gamestart(self):
@@ -1208,15 +1208,15 @@ class mainclass():
         elif self.comboforfirstvalue.get() == "強化学習":
             self.player[T_DARK] = AI_PLAYER
             self.playerAI[T_DARK] = AIReinforcementLearning(self.entryforrunnningtimevalue.get())
-            messagebox.showerror("error／(^o^)＼", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
+            messagebox.showerror("error", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
             sys.exit(1)  # 暫定2
         elif self.comboforfirstvalue.get() == "進化学習":
             self.player[T_DARK] = AI_PLAYER
             self.playerAI[T_DARK] = AIGA(self.entryforrunnningtimevalue.get())
-            messagebox.showerror("error／(^o^)＼", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
+            messagebox.showerror("error", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
             sys.exit(1)  # 暫定2
         else:
-            messagebox.showerror("error／(^o^)＼", "先行のAI指定が不正です。強制終了します")
+            messagebox.showerror("error", "先行のAI指定が不正です。強制終了します")
             sys.exit(1)
 
         if self.comboforsecondvalue.get() == "人間":
@@ -1237,7 +1237,7 @@ class mainclass():
                 self.playerAI[T_LIGHT] = playerAI[T_DARK]
             else:
                 self.playerAI[T_LIGHT] = AIReinforcementLearning(self.entryforrunnningtimevalue.get())
-            messagebox.showerror("error／(^o^)＼", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
+            messagebox.showerror("error", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
             sys.exit(1)  # 暫定2
         elif self.comboforsecondvalue.get() == "進化学習":
             self.player[T_LIGHT] = AI_PLAYER
@@ -1245,10 +1245,10 @@ class mainclass():
                 self.playerAI[T_LIGHT] = playerAI[T_DARK]
             else:
                 self.playerAI[T_LIGHT] = AIGA(self.entryforrunnningtimevalue.get())
-            messagebox.showerror("error／(^o^)＼", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
+            messagebox.showerror("error", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
             sys.exit(1)  # 暫定2
         else:
-            messagebox.showerror("error／(^o^)＼", "後攻のAI指定が不正です。強制終了します")
+            messagebox.showerror("error", "後攻のAI指定が不正です。強制終了します")
             sys.exit(1)
         # 初期準備
         self.Standby()
@@ -1292,7 +1292,7 @@ class mainclass():
 
     def Start(self):
         # 開始
-        self.root.mainloop()
+        self.tk_root.mainloop()
 
 
 myothello = mainclass()
