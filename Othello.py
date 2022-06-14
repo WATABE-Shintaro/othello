@@ -2,13 +2,12 @@ import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
-import numpy as np
 from time import sleep
 import copy
-import random
 import sys
 
 from board_object import BoardObject
+from AI_object import AIObject
 
 # 定数
 # GUI用
@@ -42,396 +41,6 @@ PLACEABLE = 1
 STATE_GAME_END = -1
 STATE_PASS = 0
 STATE_PLACE = 1
-
-# クラス群
-# ランダム
-class AIRandom:
-    def __init__(self):
-        pass
-
-    def playprocess(self, board_object, turn_d_or_l, turn_number):
-        placeable_points_num = 0
-        for i in range(NUMBER_OF_SQUARE):
-            for j in range(NUMBER_OF_SQUARE):
-                if board_object.get_placeable_or_not_board(i, j) == PLACEABLE:
-                    placeable_points_num += 1
-        the_decision = random.randrange(placeable_points_num)
-        k = 0
-        point_vec = [0, 0]
-        for i in range(NUMBER_OF_SQUARE):  # 暫定9二重ループをブレークしたい
-            for j in range(NUMBER_OF_SQUARE):
-                if board_object.get_placeable_or_not_board(i, j) == PLACEABLE:
-                    if k == the_decision:
-                        point_vec = [i, j]
-                    k += 1
-        return point_vec
-
-    def getgamerecord(self, airecord):
-        pass
-
-    def passprocess(self):
-        pass
-
-    def save(self):
-        pass
-
-    def endprocess(self):
-        pass
-
-    def __del__(self):
-        print("AIオブジェクト破棄")
-
-
-# 優先順位型
-class AILookPriority:
-    def __init__(self):
-        # 優先順位のリスト作る
-        self.prioritylist = [[0, 0], [0, 7], [7, 7], [7, 0]]
-        for i in range(2, 6):
-            self.prioritylist.append([0, i])
-        for i in range(2, 6):
-            self.prioritylist.append([7, i])
-        for i in range(2, 6):
-            self.prioritylist.append([i, 0])
-        for i in range(2, 6):
-            self.prioritylist.append([i, 7])
-        for i in range(2, 6):
-            for j in range(2, 6):
-                self.prioritylist.append([i, j])
-        for i in range(2, 6):
-            self.prioritylist.append([1, i])
-        for i in range(2, 6):
-            self.prioritylist.append([6, i])
-        for i in range(2, 6):
-            self.prioritylist.append([i, 1])
-        for i in range(2, 6):
-            self.prioritylist.append([i, 6])
-        self.prioritylist.append([0, 1])
-        self.prioritylist.append([1, 1])
-        self.prioritylist.append([1, 0])
-        self.prioritylist.append([6, 0])
-        self.prioritylist.append([6, 1])
-        self.prioritylist.append([7, 1])
-        self.prioritylist.append([7, 6])
-        self.prioritylist.append([6, 6])
-        self.prioritylist.append([6, 7])
-        self.prioritylist.append([1, 7])
-        self.prioritylist.append([1, 6])
-        self.prioritylist.append([0, 6])
-        print(self.prioritylist)
-        print(len(self.prioritylist))
-
-    def playprocess(self, aiboadsurface, aiputablepoint, aifirstornot, aiturnnumber):
-        for i in range(len(self.prioritylist)):
-            aipoint = copy.copy(self.prioritylist[i])
-            if aiputablepoint[aipoint[X_AXIS], aipoint[Y_AXIS]] == PLACEABLE:
-                break
-        else:
-            messagebox.showerror("error", "AILookPriorityはおける場所を見つけられませんでした。強制終了します。")
-            sys.exit(1)
-        return aipoint
-
-    def getgamerecord(self, airecord):
-        pass
-
-    def passprocess(self):
-        pass
-
-    def save(self):
-        pass
-
-    def endprocess(self):
-        pass
-
-    def __del__(self):
-        print("AIオブジェクト破棄")
-
-
-# 先読み型
-class AIReadAhead:
-
-    def __init__(self):
-        self.firstornotT2 = None
-        self.ChangeMoveTurnNumber = 26
-        self.Deeplevel = 5
-
-    def playprocess(self, aiboadsurface, aiputablepoint, aifirstornot, aiturnnumber):
-        alpha = None
-        beta = None
-        if aifirstornot == T_DARK:
-            self.firstornotT2 = TURN_OF_DARK
-        elif aifirstornot == T_LIGHT:
-            self.firstornotT2 = TURN_OF_LIGHT
-        else:
-            messagebox.showerror("error", "不正な値(firstornot)。強制終了します。")
-            sys.exit(1)
-        firstornotT = self.firstornotT2
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(aiboadsurface, firstornotT=firstornotT)
-        if moveableornot != STATE_PLACE:
-            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
-            sys.exit(1)
-        if aiturnnumber >= 26:
-            scoremax = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(aiboadsurface)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        score = self.selectminpiece(nextboadsurface, alpha, beta, firstornotT * -1)
-                        if scoremax is not None and score > scoremax:
-                            scoremax = score
-                            if alpha is None:
-                                alpha = scoremax
-                            else:
-                                alpha = max([scoremax, alpha])
-                            point = [i, j]
-                        elif scoremax is None:
-                            scoremax = score
-                            point = [i, j]
-            return point
-        else:
-            scoremax = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(aiboadsurface)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        score = self.selectminscore(nextboadsurface, self.Deeplevel - 1, alpha, beta, firstornotT * -1)
-                        if scoremax is not None and score > scoremax:
-                            scoremax = score
-                            if alpha is None:
-                                alpha = scoremax
-                            else:
-                                alpha = max([scoremax, alpha])
-                            point = [i, j]
-                        elif scoremax is None:
-                            scoremax = score
-                            point = [i, j]
-            return point
-
-    def getgamerecord(self, airecord):
-        pass
-
-    def passprocess(self):
-        pass
-
-    def save(self):
-        pass
-
-    def endprocess(self):
-        pass
-
-    def __del__(self):
-        print("AIオブジェクト破棄")
-
-    def makescore(self, boadsurface2, firstornotT):
-        moveableornot, puttableplace = CalculateBoard.calculate_where_placeable(boadsurface2, the_turn=firstornotT)
-        if moveableornot == PLACEABLE:
-            puttablecount = np.count_nonzero(puttableplace == PLACEABLE)
-        else:
-            puttablecount = 0
-        A = puttablecount * firstornotT * self.firstornotT2
-        templist = [boadsurface2[1][1], boadsurface2[1][8], boadsurface2[8][8], boadsurface2[8][1]]
-        B = templist.count(firstornotT) - templist.count(firstornotT * -1)
-        return A + B * 5
-
-    def selectmaxscore(self, boadsurface2, depth, alpha, beta, firstornotT):
-        if depth == 0:
-            return self.makescore(boadsurface2, firstornotT)
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
-        depth -= 1
-        if moveableornot == STATE_PLACE:
-            scoremax = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(boadsurface2)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        score = self.selectminscore(nextboadsurface, depth, alpha, beta, firstornotT * -1)
-                        if beta is not None and score >= beta:
-                            return score
-                        if scoremax is not None and score > scoremax:
-                            scoremax = score
-                            if alpha is None:
-                                alpha = scoremax
-                            else:
-                                alpha = max([scoremax, alpha])
-                        elif scoremax is None:
-                            scoremax = score
-            return scoremax
-        elif moveableornot == STATE_PASS:
-            score = self.selectminscore(boadsurface2, depth, alpha, beta, firstornotT * -1)
-            return score
-        else:
-            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
-            sys.exit(1)
-
-    def selectminscore(self, boadsurface2, depth, alpha, beta, firstornotT):
-        if depth == 0:
-            return self.makescore(boadsurface2, firstornotT)
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
-        depth -= 1
-        if moveableornot == STATE_PLACE:
-            scoremin = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(boadsurface2)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        score = self.selectmaxscore(nextboadsurface, depth, alpha, beta, firstornotT * -1)
-                        if alpha is not None and score <= alpha:
-                            return score
-                        if scoremin is not None and score < scoremin:
-                            scoremin = score
-                            if beta is None:
-                                beta = scoremin
-                            else:
-                                beta = min([scoremin, beta])
-                        elif scoremin is None:
-                            scoremin = score
-            return scoremin
-        elif moveableornot == STATE_PASS:
-            score = self.selectmaxscore(boadsurface2, depth, alpha, beta, firstornotT * -1)
-            return score
-        else:
-            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
-            sys.exit(1)
-
-    def countmypiece(self, boadsurface2):
-        return np.count_nonzero(boadsurface2 == self.firstornotT2)
-
-    def selectmaxpiece(self, boadsurface2, alpha, beta, firstornotT):
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
-        if moveableornot == STATE_GAME_END:
-            return self.countmypiece(boadsurface2)
-        elif moveableornot == STATE_PASS:
-            score = self.selectminpiece(boadsurface2, alpha, beta, firstornotT * -1)
-            return score
-        elif moveableornot == PLACEABLE:
-            scoremax = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(boadsurface2)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        score = self.selectminpiece(nextboadsurface, alpha, beta, firstornotT * -1)
-                        if beta is not None and score >= beta:
-                            return score
-                        if scoremax is not None and score > scoremax:
-                            scoremax = score
-                            if alpha is None:
-                                alpha = scoremax
-                            else:
-                                alpha = max([scoremax, alpha])
-                        elif scoremax is None:
-                            scoremax = score
-            return scoremax
-        else:
-            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
-            sys.exit(1)
-
-    def selectminpiece(self, boadsurface2, alpha, beta, firstornotT):
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
-        if moveableornot == STATE_GAME_END:
-            return self.countmypiece(boadsurface2)
-        elif moveableornot == STATE_PASS:
-            score = self.selectmaxpiece(boadsurface2, alpha, beta, firstornotT * -1)
-            return score
-        elif moveableornot == PLACEABLE:
-            scoremin = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(boadsurface2)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        self.selectmaxpiece(nextboadsurface, alpha, beta, firstornotT * -1)
-                        if alpha is not None and score <= alpha:
-                            return score
-                        if scoremin is not None and score < scoremin:
-                            scoremin = score
-                            if beta is None:
-                                beta = scoremin
-                            else:
-                                beta = min([scoremin, beta])
-                        elif scoremin is None:
-                            scoremin = score
-            return scoremin
-        else:
-            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
-            sys.exit(1)
-
-
-# 強化学習
-class AIReinforcementLearning:
-    def __init__(self, learnornot):
-        pass
-
-    def playprocess(self, aiboadsurface, aiputablepoint, aifirstornot, aiturnnumber):
-        pass
-
-    def getgamerecord(self, airecord):
-        pass
-
-    def passprocess(self):
-        pass
-
-    def save(self):
-        pass
-
-    def endprocess(self):
-        pass
-
-    def __del__(self):
-        print("AIオブジェクト破棄")
-
-
-# 進化学習
-class AIGA:
-    def __init__(self, learnornot):
-        pass
-
-    def playprocess(self, aiboadsurface, aiputablepoint, aifirstornot, aiturnnumber):
-        pass
-
-    def getgamerecord(self, airecord):
-        pass
-
-    def passprocess(self):
-        pass
-
-    def save(self):
-        pass
-
-    def endprocess(self):
-        pass
-
-    def __del__(self):
-        print("AIオブジェクト破棄")
-
 
 
 # メインクラス
@@ -507,7 +116,7 @@ class MainClass:
             state="readonly",
             textvariable=self.combo_for_dirk_ai_value
         )
-        self.combo_for_dirk_ai['values'] = ["人間", "ランダム", "優先順位型", "先読み型", "強化学習", "進化学習"]
+        self.combo_for_dirk_ai['values'] = AIObject.ai_list
         self.combo_for_dirk_ai.set("人間")
         self.combo_for_dirk_ai.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 50, y=GAP_SIZE + OPTIONS_HEIGHT)
 
@@ -523,7 +132,7 @@ class MainClass:
             state="readonly",
             textvariable=self.combo_for_light_ai_value
         )
-        self.combo_for_light_ai['values'] = ["人間", "ランダム", "優先順位型", "先読み型", "強化学習", "進化学習"]
+        self.combo_for_light_ai['values'] = AIObject.ai_list
         self.combo_for_light_ai.set("人間")
         self.combo_for_light_ai.place(x=GAP_SIZE + BOARD_SIZE + GAP_SIZE + 50, y=GAP_SIZE + OPTIONS_HEIGHT * 2)
 
@@ -566,7 +175,7 @@ class MainClass:
         # 変数宣言
         self.board_object = BoardObject()
         self.human_or_ai = [0, 0]
-        self.ai_object = [AIRandom, AIRandom]
+        self.ai_object = [AIObject("人間"), AIObject("人間")]
         self.turn_number = 0
         self.turn_d_or_l = 0
         self.game_or_running = 0
@@ -632,57 +241,22 @@ class MainClass:
     def game_start(self):
 
         # モードを読み込みAIを作る
-        if self.combo_for_dirk_ai_value.get() == "人間":
+        ai_type = self.combo_for_dirk_ai_value.get()
+        if ai_type == "人間":
             self.human_or_ai[T_DARK] = HUMAN
-            self.ai_object[T_DARK] = 0
-        elif self.combo_for_dirk_ai_value.get() == "ランダム":
-            self.human_or_ai[T_DARK] = AI_PLAYER
-            self.ai_object[T_DARK] = AIRandom()
-        elif self.combo_for_dirk_ai_value.get() == "優先順位型":
-            self.human_or_ai[T_DARK] = AI_PLAYER
-            self.ai_object[T_DARK] = AILookPriority()
-        elif self.combo_for_dirk_ai_value.get() == "先読み型":
-            self.human_or_ai[T_DARK] = AI_PLAYER
-            self.ai_object[T_DARK] = AIReadAhead()
-        elif self.combo_for_dirk_ai_value.get() == "強化学習":
-            self.human_or_ai[T_DARK] = AI_PLAYER
-            self.ai_object[T_DARK] = AIReinforcementLearning(self.check_button_for_learn_or_not_value.get())
-            messagebox.showerror("error", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
-            sys.exit(1)  # 暫定2
-        elif self.combo_for_dirk_ai_value.get() == "進化学習":
-            self.human_or_ai[T_DARK] = AI_PLAYER
-            self.ai_object[T_DARK] = AIGA(self.check_button_for_learn_or_not_value.get())
-            messagebox.showerror("error", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
-            sys.exit(1)  # 暫定2
+            self.ai_object[T_DARK] = AIObject(ai_type)
         else:
-            messagebox.showerror("error", "先行のAI指定が不正です。強制終了します")
-            sys.exit(1)
+            self.human_or_ai[T_DARK] = AI_PLAYER
+            self.ai_object[T_DARK] = AIObject(ai_type)
 
-        if self.combo_for_light_ai_value.get() == "人間":
+        ai_type = self.combo_for_light_ai.get()
+        if ai_type == "人間":
             self.human_or_ai[T_LIGHT] = HUMAN
-            self.ai_object[T_LIGHT] = 0
-        elif self.combo_for_light_ai_value.get() == "ランダム":
-            self.human_or_ai[T_LIGHT] = AI_PLAYER
-            self.ai_object[T_LIGHT] = AIRandom()
-        elif self.combo_for_light_ai_value.get() == "優先順位型":
-            self.human_or_ai[T_LIGHT] = AI_PLAYER
-            self.ai_object[T_LIGHT] = AILookPriority()
-        elif self.combo_for_light_ai_value.get() == "先読み型":
-            self.human_or_ai[T_LIGHT] = AI_PLAYER
-            self.ai_object[T_LIGHT] = AIReadAhead()
-        elif self.combo_for_light_ai_value.get() == "強化学習":
-            self.human_or_ai[T_LIGHT] = AI_PLAYER
-            self.ai_object[T_LIGHT] = AIReinforcementLearning(self.check_button_for_learn_or_not_value.get())
-            messagebox.showerror("error", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
-            sys.exit(1)  # 暫定2
-        elif self.combo_for_light_ai_value.get() == "進化学習":
-            self.human_or_ai[T_LIGHT] = AI_PLAYER
-            self.ai_object[T_LIGHT] = AIGA(self.check_button_for_learn_or_not_value.get())
-            messagebox.showerror("error", "指定された先行のAIがまだ実装されていません。強制終了します")  # 暫定2
-            sys.exit(1)  # 暫定2
+            self.ai_object[T_LIGHT] = AIObject(ai_type)
         else:
-            messagebox.showerror("error", "後攻のAI指定が不正です。強制終了します")
-            sys.exit(1)
+            self.human_or_ai[T_LIGHT] = AI_PLAYER
+            self.ai_object[T_LIGHT] = AIObject(ai_type)
+
         # 初期準備
         self.standby()
         # ストップボタン可　　暫定で不可3
@@ -738,7 +312,7 @@ class MainClass:
             if self.human_or_ai[self.turn_d_or_l] == HUMAN:
                 messagebox.showinfo("パス", "おける場所がありません,ターンをパスします")
             else:
-                self.ai_object[self.turn_d_or_l].passprocess()
+                self.ai_object[self.turn_d_or_l].pass_process()
             self.board_object.pass_the_turn(self.turn_d_or_l)
             self.pass_the_turn()
         elif self.board_object.get_placeable_or_pass() == STATE_PLACE:  # おける場合
@@ -752,8 +326,8 @@ class MainClass:
                 self.board_enabled = True
             else:
                 # AIに情報渡す
-                place_point = self.ai_object[self.turn_d_or_l].playprocess(copy.deepcopy(self.board_object),
-                                                                           self.turn_d_or_l, self.turn_number)
+                place_point = self.ai_object[self.turn_d_or_l].calculate_place_point(copy.deepcopy(self.board_object),
+                                                                                     self.turn_d_or_l, self.turn_number)
                 # 次へ
                 self.after_place_phase(place_point)
         else:
@@ -862,7 +436,7 @@ class MainClass:
                 messagebox.showerror("error", "不正な値(player[turn_d_or_l])。強制終了します。")
                 sys.exit(1)
             else:
-                self.ai_object[self.turn_d_or_l].passprocess()
+                self.ai_object[self.turn_d_or_l].pass_process()
             state_and_point = [STATE_PASS, None]
         elif self.board_object.get_placeable_or_pass() == STATE_PLACE:  # おける場合
             if self.human_or_ai[self.turn_d_or_l] == HUMAN:
@@ -870,8 +444,8 @@ class MainClass:
                 sys.exit(1)
             else:
                 # AIに情報渡す
-                place_point = self.ai_object[self.turn_d_or_l].playprocess(copy.deepcopy(self.board_object),
-                                                                           self.turn_d_or_l, self.turn_number)
+                place_point = self.ai_object[self.turn_d_or_l].calculate_place_point(copy.deepcopy(self.board_object),
+                                                                                     self.turn_d_or_l, self.turn_number)
                 # 次へ
                 state_and_point = [STATE_PLACE, place_point]
         else:
@@ -940,9 +514,9 @@ class MainClass:
         self.rectangle_delete_all()
         # AIにゲームの終わりを伝える
         if self.human_or_ai[T_DARK] == AI_PLAYER:
-            self.ai_object[T_DARK].endprocess()
+            self.ai_object[T_DARK].end_process()
         if self.human_or_ai[T_LIGHT] == AI_PLAYER:
-            self.ai_object[T_LIGHT].endprocess()
+            self.ai_object[T_LIGHT].end_process()
         # AI破壊先行から消してしまうとずれて後攻が先行になってしまうのでわかりやすく後攻から消す
         if self.human_or_ai[T_LIGHT] == AI_PLAYER:
             del self.ai_object[T_LIGHT]
