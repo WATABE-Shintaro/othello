@@ -45,9 +45,9 @@ class BoardObject:
         self.board_state[5, 4] = DARK
         for i in range(NUMBER_OF_SQUARE + 2):
             self.board_state[0, i] = OUT_OF_BOARD
-            self.board_state[NUMBER_OF_SQUARE+1, i] = OUT_OF_BOARD
+            self.board_state[NUMBER_OF_SQUARE + 1, i] = OUT_OF_BOARD
             self.board_state[i, 0] = OUT_OF_BOARD
-            self.board_state[i, NUMBER_OF_SQUARE+1] = OUT_OF_BOARD
+            self.board_state[i, NUMBER_OF_SQUARE + 1] = OUT_OF_BOARD
         self.calculate_where_placeable(-1)
 
     def place_piece(self, x, y, idx_turn):
@@ -121,7 +121,7 @@ class BoardObject:
                     color = self.board_state[i, j] * -1
                     # 色変更
                     self.board_state[i, j] = color
-        self.calculate_where_placeable(the_turn*-1)
+        self.calculate_where_placeable(the_turn * -1)
         return True
 
     def pass_the_turn(self, idx_turn):
@@ -207,3 +207,10 @@ class BoardObject:
 
     def get_placeable_or_not_board(self, x, y):
         return self.placeable_or_not_board[x + 1, y + 1]
+
+    def __deepcopy__(self, memo):
+        new_object = BoardObject()
+        new_object.board_state = copy.deepcopy(self.board_state)
+        new_object.placeable_or_not_board = copy.deepcopy(self.placeable_or_not_board)
+        new_object.placeable_or_pass = self.placeable_or_pass
+        return new_object

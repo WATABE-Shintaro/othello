@@ -31,6 +31,7 @@ AI_PLAYER = 1
 # ゲームモード
 PLAY_GAME_MODE = 0
 LEARNING_MODE = 1
+RUNNING_MODE = 2
 # 座標
 X_AXIS = 0
 Y_AXIS = 1
@@ -184,13 +185,13 @@ class MainClass:
 
         # ボタン押せるかの管理
         self.game_start_button_enabled = True
-        self.running_start_button_enabled = False  # 暫定5
-        self.running_start_button.config(state="disable")  # 暫定5
+        self.running_start_button_enabled = True
+        self.running_start_button.config(state="normal")
         self.board_enabled = False
         self.stop_button_enabled = False
         self.stop_button.config(state="disable")
-        self.entry_for_running_time.config(state="disable")  # 暫定5
-        self.check_button_for_learn_or_not.config(state="disable")  # 暫定5
+        self.entry_for_running_time.config(state="normal")
+        self.check_button_for_learn_or_not.config(state="normal")
 
     # フォームの実体化
     def start_form(self):
@@ -218,7 +219,7 @@ class MainClass:
         else:
             self.message_label.config(text="そのボタンは押せません")
 
-    # 暫定
+    # 何回もゲームを試行する
     def running_start_button_click(self, event):
 
         if self.running_start_button_enabled:
@@ -233,8 +234,32 @@ class MainClass:
             self.combo_for_light_ai.config(state="disable")
             self.entry_for_running_time.config(state="disable")
             self.check_button_for_learn_or_not.config(state="disable")
-            messagebox.showwarning("error", "そのボタンは現在準備中です。")  # 暫定5
-            self.game_or_running = LEARNING_MODE
+            # ゲームをスタートさせる
+            # モードを指定
+            if self.check_button_for_learn_or_not_value.get():
+                self.game_or_running = RUNNING_MODE
+            else:
+                self.game_or_running = LEARNING_MODE
+            # 例外処理
+            try:
+                running_time = int(self.entry_for_running_time_value.get())
+            except ValueError:
+                messagebox.showerror("error", "整数を入力してください。強制終了します。")
+                sys.exit(1)
+            if running_time > 0:
+                for i in range(running_time):
+                    if self.combo_for_dirk_ai_value.get() == "人間":
+                        messagebox.showerror("error", "人間以外を指定してください。強制終了します。")
+                        sys.exit(1)
+                    elif self.combo_for_light_ai_value.get() == "人間":
+                        messagebox.showerror("error", "人間以外を指定してください。強制終了します。")
+                        sys.exit(1)
+                    else:
+                        # 指定回数だけゲームする。
+                        self.game_start()
+            else:
+                messagebox.showerror("error", "正の整数を入力してください。強制終了します。")
+                sys.exit(1)
         else:
             self.message_label.config(text="そのボタンは押せません")
 
@@ -259,7 +284,7 @@ class MainClass:
 
         # 初期準備
         self.standby()
-        # ストップボタン可　　暫定で不可3
+        # ストップボタン可
         self.stop_button_enabled = True
         self.stop_button.config(state="normal")
         # ターン数初期化
@@ -291,6 +316,8 @@ class MainClass:
         # 駒を初期配置にする
         self.board_object = BoardObject()
         self.delete_and_drawing_pieces()
+        # レコードを初期化する
+        self.record = []
 
     def before_place_phase(self):
 
@@ -502,12 +529,11 @@ class MainClass:
                     light_count += 1
         if dark_count > light_count:
             game_end_message = str(dark_count) + "対" + str(light_count) + "で黒の勝ち"
-            messagebox.showinfo("勝敗", game_end_message)
         elif dark_count < light_count:
             game_end_message = str(dark_count) + "対" + str(light_count) + "で白の勝ち"
-            messagebox.showinfo("勝敗", game_end_message)
         else:
             game_end_message = str(dark_count) + "対" + str(light_count) + "で引き分け"
+        if self.game_or_running == PLAY_GAME_MODE:
             messagebox.showinfo("勝敗", game_end_message)
         # 全部green
         self.piece_delete_all()
@@ -517,6 +543,11 @@ class MainClass:
             self.ai_object[T_DARK].end_process()
         if self.human_or_ai[T_LIGHT] == AI_PLAYER:
             self.ai_object[T_LIGHT].end_process()
+        # AIにレコードを渡す。
+        if self.game_or_running == RUNNING_MODE:
+            self.record.append([dark_count, light_count])
+            self.ai_object[T_DARK].record(self.record)
+            self.ai_object[T_LIGHT].record(self.record)
         # AI破壊先行から消してしまうとずれて後攻が先行になってしまうのでわかりやすく後攻から消す
         if self.human_or_ai[T_LIGHT] == AI_PLAYER:
             del self.ai_object[T_LIGHT]
@@ -527,16 +558,15 @@ class MainClass:
         # ボードクリック不可stop不可その他可
         self.game_start_button_enabled = True
         self.gamestart_button.config(state="normal")
-        self.running_start_button_enabled = False  # 暫定5
-        self.running_start_button.config(state="disable")  # 暫定5
+        self.running_start_button_enabled = True
+        self.running_start_button.config(state="normal")
         self.board_enabled = False
         self.stop_button_enabled = False
         self.stop_button.config(state="disable")
         self.combo_for_dirk_ai.config(state="normal")
         self.combo_for_light_ai.config(state="normal")
-        self.entry_for_running_time.config(state="disable")  # 暫定5
-        self.check_button_for_learn_or_not.config(state="disable")  # 暫定5
-        self.entry_for_running_time.config(state="disable")  # 暫定5
+        self.entry_for_running_time.config(state="normal")
+        self.check_button_for_learn_or_not.config(state="normal")
 
     def delete_and_drawing_pieces(self):
         self.piece_delete_all()

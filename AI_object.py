@@ -29,7 +29,7 @@ STATE_PLACE = 1
 
 # AIクラス群
 class AIObject:
-    ai_list = ["人間", "ランダム", "優先順位型"]  # ,"先読み型", "強化学習", "進化学習"]
+    ai_list = ["人間", "ランダム", "優先順位型", "先読み型"]  # , "強化学習", "進化学習"]
 
     def __init__(self, ai_type):
         self.ai_type = ai_type
@@ -52,7 +52,7 @@ class AIObject:
         pass
 
     def record(self, record):
-        pass
+        print(record)
 
     def end_process(self):
         pass

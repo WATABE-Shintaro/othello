@@ -1,5 +1,7 @@
 from tkinter import messagebox
 import sys
+import copy
+from unicodedata import name
 
 from board_object import BoardObject
 
@@ -37,221 +39,259 @@ class AICounting:
     def __init__(self):
         self.turn_d_or_l = TURN_OF_OTHER
         self.change_move_turn_num = 26
-        self.deep_level = 5
+        self.deep_level = 2
 
-    def calculate_place_point(self, board_object: BoardObject, idx_d_or_l, turn_num):
-        alpha = None
-        beta = None
-        if idx_d_or_l == T_DARK:
+    def calculate_place_point(self, board_object: BoardObject, turn_d_or_l, turn_num):
+        alpha = -1000
+        beta = 1000
+        if turn_d_or_l == T_DARK:
             self.turn_d_or_l = TURN_OF_DARK
-        elif idx_d_or_l == T_LIGHT:
+        elif turn_d_or_l == T_LIGHT:
             self.turn_d_or_l = TURN_OF_LIGHT
         else:
             messagebox.showerror("error", "不正な値(idx_d_or_l)。強制終了します。")
             sys.exit(1)
-        firstornotT = self.turn_d_or_l
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(aiboadsurface, firstornotT=firstornotT)
-        if moveableornot != STATE_PLACE:
-            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
+        if board_object.get_placeable_or_pass() != STATE_PLACE:
+            messagebox.showerror("error", "動けないのに手を求められた。強制終了します。")
             sys.exit(1)
-        if turn_num >= 26:
-            scoremax = None
+        if turn_num >= self.change_move_turn_num:
+            max_score = None
+            point = [0, 0]
             for i in range(NUMBER_OF_SQUARE):
                 for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(aiboadsurface)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        score = self.selectminpiece(nextboadsurface, alpha, beta, firstornotT * -1)
-                        if scoremax is not None and score > scoremax:
-                            scoremax = score
+                    if board_object.get_placeable_or_not_board(i, j) == PLACEABLE:
+                        # コピーして、i,jに置いた時のボードを生成する。
+                        next_board_object = copy.deepcopy(board_object)
+                        next_board_object.place_piece(i, j, turn_d_or_l)
+                        score = self.select_min_piece(next_board_object, alpha, beta, self.change_turn(turn_d_or_l))
+                        # メモリ解放
+                        del next_board_object
+                        # 一段上での暫定的な最小値ベータを上回った場合、もはや採択されることはないので、適当に返す。
+                        if score >= beta:
+                            messagebox.showerror("error", "。強制終了します。")
+                            sys.exit(1)
+                        # 最大値を記録する。暫定的な最大値アルファを設定する。
+                        if max_score is not None and score > max_score:
+                            max_score = score
                             if alpha is None:
-                                alpha = scoremax
+                                alpha = max_score
                             else:
-                                alpha = max([scoremax, alpha])
+                                alpha = max([max_score, alpha])
                             point = [i, j]
-                        elif scoremax is None:
-                            scoremax = score
-                            point = [i, j]
-            return point
-        else:
-            scoremax = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(aiboadsurface)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        score = self.selectminscore(nextboadsurface, self.deep_level - 1, alpha, beta, firstornotT * -1)
-                        if scoremax is not None and score > scoremax:
-                            scoremax = score
-                            if alpha is None:
-                                alpha = scoremax
-                            else:
-                                alpha = max([scoremax, alpha])
-                            point = [i, j]
-                        elif scoremax is None:
-                            scoremax = score
+                        elif max_score is None:
+                            max_score = score
                             point = [i, j]
             return point
-
-    def makescore(self, boadsurface2, firstornotT):
-        moveableornot, puttableplace = CalculateBoard.calculate_where_placeable(boadsurface2, the_turn=firstornotT)
-        if moveableornot == PLACEABLE:
-            puttablecount = np.count_nonzero(puttableplace == PLACEABLE)
         else:
-            puttablecount = 0
-        A = puttablecount * firstornotT * self.turn_d_or_l
-        templist = [boadsurface2[1][1], boadsurface2[1][8], boadsurface2[8][8], boadsurface2[8][1]]
-        B = templist.count(firstornotT) - templist.count(firstornotT * -1)
-        return A + B * 5
-
-    def selectmaxscore(self, boadsurface2, depth, alpha, beta, firstornotT):
-        if depth == 0:
-            return self.makescore(boadsurface2, firstornotT)
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
-        depth -= 1
-        if moveableornot == STATE_PLACE:
-            scoremax = None
+            max_score = None
+            point = [0, 0]
             for i in range(NUMBER_OF_SQUARE):
                 for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(boadsurface2)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        score = self.selectminscore(nextboadsurface, depth, alpha, beta, firstornotT * -1)
-                        if beta is not None and score >= beta:
-                            return score
-                        if scoremax is not None and score > scoremax:
-                            scoremax = score
+                    if board_object.get_placeable_or_not_board(i, j) == PLACEABLE:
+                        # コピーして、i,jに置いた時のボードを生成する。
+                        next_board_object = copy.deepcopy(board_object)
+                        next_board_object.place_piece(i, j, turn_d_or_l)
+                        score = self.select_min_score(next_board_object,self.deep_level, alpha, beta, self.change_turn(turn_d_or_l))
+                        # メモリ解放
+                        del next_board_object
+                        # 一段上での暫定的な最小値ベータを上回った場合、もはや採択されることはないので、適当に返す。
+                        if score >= beta:
+                            messagebox.showerror("error", "。強制終了します。")
+                            sys.exit(1)
+                        # 最大値を記録する。暫定的な最大値アルファを設定する。
+                        if max_score is not None and score > max_score:
+                            max_score = score
                             if alpha is None:
-                                alpha = scoremax
+                                alpha = max_score
                             else:
-                                alpha = max([scoremax, alpha])
-                        elif scoremax is None:
-                            scoremax = score
-            return scoremax
-        elif moveableornot == STATE_PASS:
-            score = self.selectminscore(boadsurface2, depth, alpha, beta, firstornotT * -1)
+                                alpha = max([max_score, alpha])
+                            point = [i, j]
+                        elif max_score is None:
+                            max_score = score
+                            point = [i, j]
+            return point
+
+    def make_score(self, board_object: BoardObject, turn_d_or_l):
+        if board_object.get_placeable_or_pass() == STATE_PLACE:
+            count_of_placeable = 0
+            for i in range(NUMBER_OF_SQUARE):
+                for j in range(NUMBER_OF_SQUARE):
+                    if board_object.get_placeable_or_not_board(i, j) == PLACEABLE:
+                        count_of_placeable += 1
+        else:
+            count_of_placeable = 0
+        return count_of_placeable
+
+    def select_max_score(self, board_object: BoardObject, depth, alpha, beta, turn_d_or_l):
+        # 再起的にminとmaxで関数を回していく。depthを減らしていき、0になったらその時のスコアを出す。
+        depth -= 1
+        if depth == 0:
+            return self.make_score(board_object, turn_d_or_l)
+            # ターンをパスせずにすむとき
+        if board_object.get_placeable_or_pass() == STATE_PLACE:
+            max_score = None
+            # 全マスを調べて、置けるときにそこに置いた時のボードオブジェクトを生成し、スコアを計算する。
+            for i in range(NUMBER_OF_SQUARE):
+                for j in range(NUMBER_OF_SQUARE):
+                    if board_object.get_placeable_or_not_board(i, j) == PLACEABLE:
+                        # コピーして、i,jに置いた時のボードを生成する。
+                        next_board_object = copy.deepcopy(board_object)
+                        next_board_object.place_piece(i, j, turn_d_or_l)
+                        score = self.select_min_score(next_board_object, depth, alpha, beta,
+                                                      self.change_turn(turn_d_or_l))
+                        # メモリ解放
+                        del next_board_object
+                        # 一段上での暫定的な最小値ベータを上回った場合、もはや採択されることはないので、適当に返す。
+                        if score >= beta:
+                            return score
+                        # 最大値を記録する。暫定的な最大値アルファを設定する。
+                        if max_score is not None and score > max_score:
+                            max_score = score
+                            if alpha is None:
+                                alpha = max_score
+                            else:
+                                alpha = max([alpha, max_score])
+                        elif max_score is None:
+                            max_score = score
+            return max_score
+        elif board_object.get_placeable_or_pass() == STATE_PASS:
+            next_board_object = copy.deepcopy(board_object)
+            next_board_object.pass_the_turn(turn_d_or_l)
+            score = self.select_min_score(next_board_object, depth, alpha, beta, self.change_turn(turn_d_or_l))
             return score
         else:
-            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
+            messagebox.showerror("error", "不正な値。強制終了します。")
             sys.exit(1)
 
-    def selectminscore(self, boadsurface2, depth, alpha, beta, firstornotT):
-        if depth == 0:
-            return self.makescore(boadsurface2, firstornotT)
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
-        depth -= 1
-        if moveableornot == STATE_PLACE:
-            scoremin = None
+    def select_min_score(self, board_object: BoardObject, depth, alpha, beta, turn_d_or_l):
+        # 再起的にminとmaxで関数を回していく。depthを減らしていき、0になったらその時のスコアを出す
+        if board_object.get_placeable_or_pass() == STATE_PLACE:
+            min_score = None
             for i in range(NUMBER_OF_SQUARE):
                 for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(boadsurface2)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        score = self.selectmaxscore(nextboadsurface, depth, alpha, beta, firstornotT * -1)
+                    if board_object.get_placeable_or_not_board(i, j) == PLACEABLE:
+                        # コピーして、i,jに置いた時のボードを生成する。
+                        next_board_object = copy.deepcopy(board_object)
+                        next_board_object.place_piece(i, j, turn_d_or_l)
+                        score = self.select_max_score(next_board_object, depth, alpha, beta,
+                                                      self.change_turn(turn_d_or_l))
+                        # メモリ解放
+                        del next_board_object
+                        # 一段上での暫定的な最大値アルファを上回った場合、もはや採択されることはないので、適当に返す。
+                        if score <= alpha:
+                            return score
+                        # 最小値を記録する。暫定的な最小値ベータを設定する。
+                        if min_score is not None and score < min_score:
+                            min_score = score
+                            if beta is None:
+                                beta = min_score
+                            else:
+                                beta = min([min_score, beta])
+                        elif min_score is None:
+                            min_score = score
+            return min_score
+        if board_object.get_placeable_or_pass() == STATE_PASS:
+            next_board_object = copy.deepcopy(board_object)
+            next_board_object.pass_the_turn(turn_d_or_l)
+            score = self.select_max_score(board_object, depth, alpha, beta, self.change_turn(turn_d_or_l))
+            return score
+        else:
+            messagebox.showerror("error", "不正な値。強制終了します。")
+            sys.exit(1)
+
+    def count_piece(self, board_object: BoardObject):
+        count = 0
+        for i in range(NUMBER_OF_SQUARE):
+            for j in range(NUMBER_OF_SQUARE):
+                if board_object.get_board_state(i, j) == self.turn_d_or_l:
+                    count += 1
+        return count
+
+    def select_max_piece(self, board_object: BoardObject, alpha, beta, turn_d_or_l):
+        # 再起的にminとmaxで関数を回していく。ゲームが終わったら底
+        if board_object.get_placeable_or_pass() == STATE_GAME_END:
+            return self.count_piece(board_object)
+        elif board_object.get_placeable_or_pass() == PLACEABLE:
+            max_score = None
+            for i in range(NUMBER_OF_SQUARE):
+                for j in range(NUMBER_OF_SQUARE):
+                    if board_object.get_placeable_or_not_board(i, j) == PLACEABLE:
+                        # コピーして、i,jに置いた時のボードを生成する。
+                        next_board_object = copy.deepcopy(board_object)
+                        next_board_object.place_piece(i, j, turn_d_or_l)
+                        score = self.select_min_piece(next_board_object, alpha, beta, self.change_turn(turn_d_or_l))
+                        # メモリ解放
+                        del next_board_object
+                        # 一段上での暫定的な最小値ベータを上回った場合、もはや採択されることはないので、適当に返す。
+                        if score >= beta:
+                            return score
+                        # 最大値を記録する。暫定的な最大値アルファを設定する。
+                        if max_score is not None and score > max_score:
+                            max_score = score
+                            if alpha is None:
+                                alpha = max_score
+                            else:
+                                alpha = max([max_score, alpha])
+                        elif max_score is None:
+                            max_score = score
+            return max_score
+        elif board_object.get_placeable_or_pass() == STATE_PASS:
+            next_board_object = copy.deepcopy(board_object)
+            next_board_object.pass_the_turn(turn_d_or_l)
+            score = self.select_min_piece(next_board_object, alpha, beta, self.change_turn(turn_d_or_l))
+            return score
+        else:
+            messagebox.showerror("error", "不正な値。強制終了します。")
+            sys.exit(1)
+
+    def select_min_piece(self, board_object: BoardObject, alpha, beta, turn_d_or_l):
+        # 再起的にminとmaxで関数を回していく。ゲームが終わったら底
+        if board_object.get_placeable_or_pass() == STATE_GAME_END:
+            return self.count_piece(board_object)
+        elif board_object.get_placeable_or_pass() == PLACEABLE:
+            min_score = None
+            for i in range(NUMBER_OF_SQUARE):
+                for j in range(NUMBER_OF_SQUARE):
+                    if board_object.get_placeable_or_not_board(i, j) == PLACEABLE:
+                        # コピーして、i,jに置いた時のボードを生成する。
+                        next_board_object = copy.deepcopy(board_object)
+                        next_board_object.place_piece(i, j, turn_d_or_l)
+                        score = self.select_max_piece(next_board_object, alpha, beta, self.change_turn(turn_d_or_l))
+                        # メモリ解放
+                        del next_board_object
+                        # 一段上での暫定的な最大値アルファを上回った場合、もはや採択されることはないので、適当に返す。
                         if alpha is not None and score <= alpha:
                             return score
-                        if scoremin is not None and score < scoremin:
-                            scoremin = score
+                        # 最小値を記録する。暫定的な最小値ベータを設定する。
+                        if min_score is not None and score < min_score:
+                            min_score = score
                             if beta is None:
-                                beta = scoremin
+                                beta = min_score
                             else:
-                                beta = min([scoremin, beta])
-                        elif scoremin is None:
-                            scoremin = score
-            return scoremin
-        elif moveableornot == STATE_PASS:
-            score = self.selectmaxscore(boadsurface2, depth, alpha, beta, firstornotT * -1)
+                                beta = min([min_score, beta])
+                        elif min_score is None:
+                            min_score = score
+            return min_score
+        elif board_object.get_placeable_or_pass() == STATE_PASS:
+            next_board_object = copy.deepcopy(board_object)
+            next_board_object.pass_the_turn(turn_d_or_l)
+            score = self.select_max_piece(next_board_object, alpha, beta, self.change_turn(turn_d_or_l))
             return score
         else:
-            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
+            messagebox.showerror("error", "不正な値。強制終了します。")
             sys.exit(1)
 
-    def countmypiece(self, boadsurface2):
-        return np.count_nonzero(boadsurface2 == self.turn_d_or_l)
-
-    def selectmaxpiece(self, boadsurface2, alpha, beta, firstornotT):
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
-        if moveableornot == STATE_GAME_END:
-            return self.countmypiece(boadsurface2)
-        elif moveableornot == STATE_PASS:
-            score = self.selectminpiece(boadsurface2, alpha, beta, firstornotT * -1)
-            return score
-        elif moveableornot == PLACEABLE:
-            scoremax = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(boadsurface2)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        score = self.selectminpiece(nextboadsurface, alpha, beta, firstornotT * -1)
-                        if beta is not None and score >= beta:
-                            return score
-                        if scoremax is not None and score > scoremax:
-                            scoremax = score
-                            if alpha is None:
-                                alpha = scoremax
-                            else:
-                                alpha = max([scoremax, alpha])
-                        elif scoremax is None:
-                            scoremax = score
-            return scoremax
-        else:
-            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
-            sys.exit(1)
-
-    def selectminpiece(self, boadsurface2, alpha, beta, firstornotT):
-        moveableornot, putableplace, trunplacelist = CalculateBoard.Search2(boadsurface2, firstornotT=firstornotT)
-        if moveableornot == STATE_GAME_END:
-            return self.countmypiece(boadsurface2)
-        elif moveableornot == STATE_PASS:
-            score = self.selectmaxpiece(boadsurface2, alpha, beta, firstornotT * -1)
-            return score
-        elif moveableornot == PLACEABLE:
-            scoremin = None
-            for i in range(NUMBER_OF_SQUARE):
-                for j in range(NUMBER_OF_SQUARE):
-                    if putableplace[i, j] == PLACEABLE:
-                        nextboadsurface = copy.copy(boadsurface2)
-                        nextboadsurface[i + 1][j + 1] = firstornotT
-                        for k in range(NUMBER_OF_SQUARE):
-                            for l in range(NUMBER_OF_SQUARE):
-                                if trunplacelist[i][j][k][l]:
-                                    nextboadsurface[k + 1][l + 1] = nextboadsurface[k + 1][l + 1] * -1
-                        self.selectmaxpiece(nextboadsurface, alpha, beta, firstornotT * -1)
-                        if alpha is not None and score <= alpha:
-                            return score
-                        if scoremin is not None and score < scoremin:
-                            scoremin = score
-                            if beta is None:
-                                beta = scoremin
-                            else:
-                                beta = min([scoremin, beta])
-                        elif scoremin is None:
-                            scoremin = score
-            return scoremin
-        else:
-            messagebox.showerror("error", "不正な値(moveableornot)。強制終了します。")
-            sys.exit(1)
+    def change_turn(self, turn_d_or_l):
+        if turn_d_or_l == T_DARK:
+            return T_LIGHT
+        if turn_d_or_l == T_LIGHT:
+            return T_DARK
 
     def __del__(self):
         print("AIオブジェクト破棄")
+
+if __name__ == '__main__':
+    aaa = AICounting()
+    bbb = BoardObject()
+    a=aaa.calculate_place_point(bbb,T_DARK,1)
+    print(a)
