@@ -2,7 +2,8 @@ from tkinter import messagebox
 import sys
 import copy
 
-from board_object import BoardObject
+from cy_board_object import BoardObject
+
 
 # 定数
 # GUI用
@@ -310,3 +311,19 @@ class AICounting:
 
     def __del__(self):
         print("AIオブジェクト破棄")
+
+if __name__ == '__main__':
+    import time
+    start = time.time()
+    aaa = AICounting()
+    bbb = BoardObject()
+    for i in range(1,4):
+        ccc=aaa.calculate_place_point(bbb,T_DARK,i)
+        print(ccc)
+        bbb.place_piece(ccc[X_AXIS], ccc[Y_AXIS], T_DARK)
+
+        ccc=aaa.calculate_place_point(bbb,T_LIGHT,i)
+        print(ccc)
+        bbb.place_piece(ccc[X_AXIS], ccc[Y_AXIS], T_LIGHT)
+    elapsed_time = time.time() - start
+    print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")

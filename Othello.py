@@ -6,7 +6,7 @@ from time import sleep
 import copy
 import sys
 
-from board_object import BoardObject
+from cy_board_object import BoardObject
 from AI_object import AIObject
 
 # 定数
