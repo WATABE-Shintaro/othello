@@ -1,7 +1,6 @@
 from tkinter import messagebox
 import sys
 import copy
-from unicodedata import name
 
 from board_object import BoardObject
 
@@ -91,7 +90,8 @@ class AICounting:
                         # コピーして、i,jに置いた時のボードを生成する。
                         next_board_object = copy.deepcopy(board_object)
                         next_board_object.place_piece(i, j, turn_d_or_l)
-                        score = self.select_min_score(next_board_object,self.deep_level, alpha, beta, self.change_turn(turn_d_or_l))
+                        score = self.select_min_score(next_board_object, self.deep_level, alpha, beta,
+                                                      self.change_turn(turn_d_or_l))
                         # メモリ解放
                         del next_board_object
                         # 一段上での暫定的な最小値ベータを上回った場合、もはや採択されることはないので、適当に返す。
@@ -112,6 +112,27 @@ class AICounting:
             return point
 
     def make_score(self, board_object: BoardObject, turn_d_or_l):
+        if turn_d_or_l == T_DARK and self.turn_d_or_l == TURN_OF_LIGHT:
+            messagebox.showerror("error", "不正な値。強制終了します。")
+            sys.exit(1)
+        elif turn_d_or_l == T_LIGHT and self.turn_d_or_l == TURN_OF_DARK:
+            messagebox.showerror("error", "不正な値。強制終了します。")
+            sys.exit(1)
+        # 自分の置ける場所のカウント
+        a = self.caliculate_score(board_object)
+        # 相手の置ける場所のカウントの最小値
+        b = 100
+        for i in range(NUMBER_OF_SQUARE):
+            for j in range(NUMBER_OF_SQUARE):
+                if board_object.get_placeable_or_not_board(i, j) == PLACEABLE:
+                    # コピーして、i,jに置いた時のボードを生成する。
+                    next_board_object = copy.deepcopy(board_object)
+                    next_board_object.place_piece(i, j, turn_d_or_l)
+                    temp = self.caliculate_score(next_board_object)
+                    b = min([b, temp])
+        return a-b
+
+    def caliculate_score(self, board_object: BoardObject):
         if board_object.get_placeable_or_pass() == STATE_PLACE:
             count_of_placeable = 0
             for i in range(NUMBER_OF_SQUARE):
@@ -289,9 +310,3 @@ class AICounting:
 
     def __del__(self):
         print("AIオブジェクト破棄")
-
-if __name__ == '__main__':
-    aaa = AICounting()
-    bbb = BoardObject()
-    a=aaa.calculate_place_point(bbb,T_DARK,1)
-    print(a)
